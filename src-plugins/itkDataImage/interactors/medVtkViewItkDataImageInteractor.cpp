@@ -61,6 +61,8 @@ public:
 
     QMap <QString,QString> presetToLut;
 
+    QPointer<QWidget> toolbar;
+
     bool isFloatImage;
     double intensityStep;
 };
@@ -270,6 +272,7 @@ void medVtkViewItkDataImageInteractor::initParameters(medAbstractImageData* data
 
     d->enableWindowLevelParameter = new medBoolParameter("Windowing", this);
     d->enableWindowLevelParameter->setIcon(QIcon (":/icons/wlww.png"));
+    d->enableWindowLevelParameter->setIconSize(QSize(52,20));
     d->enableWindowLevelParameter->setToolTip (tr("Windowing"));
     connect(d->enableWindowLevelParameter, SIGNAL(valueChanged(bool)), this, SLOT(enableWIndowLevel(bool)));
 
@@ -480,8 +483,12 @@ void medVtkViewItkDataImageInteractor::setMaxIntensity(double max)
 
 QWidget* medVtkViewItkDataImageInteractor::buildToolBarWidget()
 {
+    d->toolbar = new QWidget();
+    QHBoxLayout* toolbarLayout = new QHBoxLayout(d->toolbar);
+    toolbarLayout->setContentsMargins(5, 0, 0, 0);
     d->slicingParameter->getSlider()->setOrientation(Qt::Horizontal);
-    return d->slicingParameter->getSlider();
+    toolbarLayout->addWidget(d->slicingParameter->getSlider());
+    return d->toolbar;
 }
 
 QWidget* medVtkViewItkDataImageInteractor::buildToolBoxWidget()

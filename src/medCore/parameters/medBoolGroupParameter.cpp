@@ -163,11 +163,14 @@ QWidget* medBoolGroupParameter::getPushButtonGroup()
         d->pushButtonGroup = new QButtonGroup;
         d->pushButtonGroup->setExclusive(true);
 
+        d->pushButtonLayout->addStretch();
         foreach (medBoolParameter* parameter, d->parameters)
         {
             d->pushButtonGroup->addButton(parameter->getPushButton());
             d->pushButtonLayout->addWidget(parameter->getPushButton());
         }
+        d->pushButtonLayout->addStretch();
+        d->pushButtonLayout->setSpacing(0);
 
         this->addToInternWidgets(d->pushButtonGroupWidget);
         connect(d->pushButtonGroupWidget, SIGNAL(destroyed()), this, SLOT(removeInternPushButtonGroup()));

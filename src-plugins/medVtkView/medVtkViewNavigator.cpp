@@ -106,29 +106,29 @@ medVtkViewNavigator::medVtkViewNavigator(medAbstractView *parent) :
 
     d->oAxialParameter = new medBoolParameter("axial", this);
     d->oAxialParameter->setIcon(QIcon(":/icons/AxialIcon.png"));
-    d->oAxialParameter->setIconSize(QSize(40,40));
-    d->oAxialParameter->getPushButton()->setMinimumSize(64,64);
+    d->oAxialParameter->setIconSize(QSize(65,64));
+    d->oAxialParameter->getPushButton()->setMinimumSize(65,64);
     connect(d->oAxialParameter, SIGNAL(valueChanged(bool)),
             this, SLOT(setAxial(bool)));
 
     d->oCoronalParameter = new medBoolParameter("coronal", this);
     d->oCoronalParameter->setIcon(QIcon(":/icons/CoronalIcon.png"));
-    d->oCoronalParameter->setIconSize(QSize(40,40));
-    d->oCoronalParameter->getPushButton()->setMinimumSize(64,64);
+    d->oCoronalParameter->setIconSize(QSize(65,64));
+    d->oCoronalParameter->getPushButton()->setMinimumSize(65,64);
     connect(d->oCoronalParameter, SIGNAL(valueChanged(bool)),
             this, SLOT(setCoronal(bool)));
 
     d->oSagittalParameter = new medBoolParameter("sagittal", this);
     d->oSagittalParameter->setIcon(QIcon(":/icons/SagittalIcon.png"));
-    d->oSagittalParameter->setIconSize(QSize(40,40));
-    d->oSagittalParameter->getPushButton()->setMinimumSize(64,64);
+    d->oSagittalParameter->setIconSize(QSize(65,64));
+    d->oSagittalParameter->getPushButton()->setMinimumSize(65,64);
     connect(d->oSagittalParameter, SIGNAL(valueChanged(bool)),
             this, SLOT(setSagittal(bool)));
 
     d->o3dParameter = new medBoolParameter("3d", this);
     d->o3dParameter->setIcon(QIcon(":/icons/3DIcon.png"));
-    d->o3dParameter->setIconSize(QSize(40,40));
-    d->o3dParameter->getPushButton()->setMinimumSize(64,64);
+    d->o3dParameter->setIconSize(QSize(65,64));
+    d->o3dParameter->getPushButton()->setMinimumSize(65,64);
     connect(d->o3dParameter, SIGNAL(valueChanged(bool)),
             this, SLOT(set3d(bool)));
 
@@ -164,21 +164,25 @@ medVtkViewNavigator::medVtkViewNavigator(medAbstractView *parent) :
     
     d->enableZooming = new medBoolParameter("Zooming", this);
     d->enableZooming->setIcon(QIcon (":/icons/magnify.png"));
+    d->enableZooming->setIconSize(QSize(52,20));
     d->enableZooming->setToolTip(tr("Zooming"));
     connect(d->enableZooming, SIGNAL(valueChanged(bool)), this, SLOT(enableZooming(bool)));
     
     d->enablePanning = new medBoolParameter("Pan",this);
     d->enablePanning->setIcon(QIcon (":/icons/pan.svg"));
+    d->enablePanning->setIconSize(QSize(52,20));
     d->enablePanning->setToolTip(tr("Pan"));
     connect(d->enablePanning, SIGNAL(valueChanged(bool)), this, SLOT(enablePanning(bool)));
 
     d->enableSlicing = new medBoolParameter("Slicing", this);
     d->enableSlicing->setIcon(QIcon (":/icons/stack.png"));
+    d->enableSlicing->setIconSize(QSize(52,20));
     d->enableSlicing->setToolTip(tr("Slicing"));
     connect(d->enableSlicing, SIGNAL(valueChanged(bool)), this, SLOT(enableSlicing(bool)));
 
     d->enableMeasuring = new medBoolParameter("Measuring", this);
     d->enableMeasuring->setIcon (QIcon (":/icons/length.png"));
+    d->enableMeasuring->setIconSize(QSize(52,20));
     d->enableMeasuring->setToolTip(tr("Measuring"));
     connect(d->enableMeasuring, SIGNAL(valueChanged(bool)), this, SLOT(enableMeasuring(bool)));
 

@@ -141,25 +141,55 @@ medMainWindow::medMainWindow ( QWidget *parent ) : QMainWindow ( parent ), d ( n
     QVariant themeChosen = medSettingsManager::instance()->value("startup","theme");
     int themeIndex = themeChosen.toInt();
 
+    QIcon quickAccessIcon;
+    QIcon adjustIcon;
+    QIcon quitIcon;
+    QIcon fullscreenIcon;
+    QIcon cameraIcon;
+    QIcon movieIcon;
+
+    if (themeIndex == 2)
+    {
+        quickAccessIcon.addPixmap(QPixmap(":music_logo_small_light.png"));
+        quitIcon.addPixmap(QPixmap(":/icons/quit_blue.png"), QIcon::Normal);
+        fullscreenIcon.addPixmap(QPixmap(":icons/fullscreenExpand_blue.png"),QIcon::Normal,QIcon::Off);
+        fullscreenIcon.addPixmap(QPixmap(":icons/fullscreenReduce_blue.png"),QIcon::Normal,QIcon::On);
+        cameraIcon.addPixmap(QPixmap(":icons/camera_blue.png"),QIcon::Normal);
+        cameraIcon.addPixmap(QPixmap(":icons/camera_grey.png"),QIcon::Disabled);
+        movieIcon.addPixmap(QPixmap(":icons/movie_blue.png"),      QIcon::Normal);
+        movieIcon.addPixmap(QPixmap(":icons/movie_grey_blue.png"), QIcon::Disabled);
+        adjustIcon.addPixmap(QPixmap(":icons/adjust_size_blue.png"),QIcon::Normal);
+        adjustIcon.addPixmap(QPixmap(":icons/adjust_size_grey_blue.png"),QIcon::Disabled);
+    }
+    else
+    {
+        if(themeIndex != 1)
+        {
+            quickAccessIcon.addPixmap(QPixmap(":music_logo_small_dark.png"));
+        }
+        else
+        {
+            quickAccessIcon.addPixmap(QPixmap(":music_logo_small_light.png"));
+        }
+        quitIcon.addPixmap(QPixmap(":/icons/quit.png"), QIcon::Normal);
+        fullscreenIcon.addPixmap(QPixmap(":icons/fullscreenExpand.png"),QIcon::Normal,QIcon::Off);
+        fullscreenIcon.addPixmap(QPixmap(":icons/fullscreenReduce.png"),QIcon::Normal,QIcon::On);
+        cameraIcon.addPixmap(QPixmap(":icons/camera.png"),QIcon::Normal);
+        cameraIcon.addPixmap(QPixmap(":icons/camera_grey.png"),QIcon::Disabled);
+        movieIcon.addPixmap(QPixmap(":icons/movie.png"),      QIcon::Normal);
+        movieIcon.addPixmap(QPixmap(":icons/movie_grey.png"), QIcon::Disabled);
+        adjustIcon.addPixmap(QPixmap(":icons/adjust_size.png"),QIcon::Normal);
+        adjustIcon.addPixmap(QPixmap(":icons/adjust_size_grey.png"),QIcon::Disabled);
+    }
+
     //  Setup quick access menu
     d->quickAccessButton = new medQuickAccessPushButton ( this );
     d->quickAccessButton->setFocusPolicy ( Qt::NoFocus );
     d->quickAccessButton->setMinimumHeight(31);
     d->quickAccessButton->setStyleSheet("border: 0px;");
-
-    switch (themeIndex)
-    {
-    case 0:
-    default:
-        d->quickAccessButton->setIcon(QIcon(":music_logo_small_dark.png"));
-        break;
-    case 1:
-        d->quickAccessButton->setIcon(QIcon(":music_logo_small_light.png"));
-        break;
-    }
-
     d->quickAccessButton->setCursor(Qt::PointingHandCursor);
     d->quickAccessButton->setText ( tr("Workspaces access menu") );
+    d->quickAccessButton->setIcon(quickAccessIcon);
     connect(d->quickAccessButton, SIGNAL(clicked()), this, SLOT(toggleQuickAccessVisibility()));
 
     d->quickAccessWidget = new medQuickAccessMenu(true, this);
@@ -187,9 +217,7 @@ medMainWindow::medMainWindow ( QWidget *parent ) : QMainWindow ( parent ), d ( n
     d->shortcutAccessVisible = false;
     d->controlPressed = false;
 
-    //Add quit button
-    QIcon quitIcon;
-    quitIcon.addPixmap(QPixmap(":/icons/quit.png"), QIcon::Normal);
+    //Add quit button   
     d->quitButton = new QToolButton(this);
     d->quitButton->setIcon(quitIcon);
     d->quitButton->setObjectName("quitButton");
@@ -197,10 +225,6 @@ medMainWindow::medMainWindow ( QWidget *parent ) : QMainWindow ( parent ), d ( n
     d->quitButton->setToolTip(tr("Close MUSIC"));
 
     //  Setup Fullscreen Button
-    QIcon fullscreenIcon ;
-    fullscreenIcon.addPixmap(QPixmap(":icons/fullscreenExpand.png"),QIcon::Normal,QIcon::Off);
-    fullscreenIcon.addPixmap(QPixmap(":icons/fullscreenReduce.png"),QIcon::Normal,QIcon::On);
-
     //  Setting up shortcuts
     //  we use a toolbutton, which has shorcuts,
     //  so we don't need the application shortcut anymore.
@@ -219,9 +243,6 @@ medMainWindow::medMainWindow ( QWidget *parent ) : QMainWindow ( parent ), d ( n
     connect ( d->fullscreenButton, SIGNAL ( toggled(bool) ),
                        this, SLOT ( setFullScreen(bool) ) );
 
-    QIcon cameraIcon;
-    cameraIcon.addPixmap(QPixmap(":icons/camera.png"),QIcon::Normal);
-    cameraIcon.addPixmap(QPixmap(":icons/camera_grey.png"),QIcon::Disabled);
     d->screenshotButton = new QToolButton(this);
     d->screenshotButton->setIcon(cameraIcon);
     d->screenshotButton->setObjectName("screenshotButton");
@@ -229,9 +250,6 @@ medMainWindow::medMainWindow ( QWidget *parent ) : QMainWindow ( parent ), d ( n
     d->screenshotButton->setToolTip(tr("Capture screenshot"));
     QObject::connect(d->screenshotButton, SIGNAL(clicked()), this, SLOT(captureScreenshot()));
 
-    QIcon movieIcon;
-    movieIcon.addPixmap(QPixmap(":icons/movie.png"),      QIcon::Normal);
-    movieIcon.addPixmap(QPixmap(":icons/movie_grey.png"), QIcon::Disabled);
     d->movieButton = new QToolButton(this);
     d->movieButton->setIcon(movieIcon);
     d->movieButton->setObjectName("movieButton");
@@ -239,9 +257,6 @@ medMainWindow::medMainWindow ( QWidget *parent ) : QMainWindow ( parent ), d ( n
     d->movieButton->setToolTip(tr("Export 4D view(s) or mesh(s) as movie.\nShortcut Alt+M.\nBeware, do not hide view(s) during process."));
     QObject::connect(d->movieButton, SIGNAL(clicked()), this, SLOT(captureVideo()));
 
-    QIcon adjustIcon;
-    adjustIcon.addPixmap(QPixmap(":icons/adjust_size.png"),QIcon::Normal);
-    adjustIcon.addPixmap(QPixmap(":icons/adjust_size_grey.png"),QIcon::Disabled);
     d->adjustSizeButton = new QToolButton(this);
     d->adjustSizeButton->setIcon(adjustIcon);
     d->adjustSizeButton->setObjectName("adjustSizeButton");

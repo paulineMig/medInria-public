@@ -70,10 +70,15 @@ medDatabaseSearchPanel::medDatabaseSearchPanel( QWidget *parent /*= 0*/ ) : medT
 	d->removeButton->setToolTip(tr("Remove a search criterion"));
     d->removeButton->setFixedWidth(10);
 
+    QHBoxLayout *hlayout = new QHBoxLayout();
+    hlayout->addStretch();
+    hlayout->addWidget(d->addButton);
+    hlayout->addWidget(d->removeButton);
+    hlayout->setSpacing(0);
+
     QHBoxLayout *vlayout = new QHBoxLayout();
     vlayout->addWidget(d->columnBox);
-    vlayout->addWidget(d->addButton);
-    vlayout->addWidget(d->removeButton);
+    vlayout->addLayout(hlayout);
 
     d->layout = new QVBoxLayout();
 

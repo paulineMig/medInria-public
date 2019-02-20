@@ -61,6 +61,7 @@ medStartupSettingsWidget::medStartupSettingsWidget(QWidget *parent) :
     d->theme = new QComboBox(this);
     d->theme->addItem(tr("Dark"));
     d->theme->addItem(tr("Light"));
+    d->theme->addItem(tr("Grey Light"));
     d->theme->setToolTip(tr("Choose a theme displayed at start-up"));
 
     QFormLayout* layout = new QFormLayout;

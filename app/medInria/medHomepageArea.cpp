@@ -143,6 +143,7 @@ medHomepageArea::medHomepageArea ( QWidget * parent ) : QWidget ( parent ), d ( 
         qssLogoName = ":music_logo_dark.png";
         break;
     case 1:
+    case 2:
         qssLogoName = ":music_logo_light.png";
         break;
     }
