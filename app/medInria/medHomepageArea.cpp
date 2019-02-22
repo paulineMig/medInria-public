@@ -122,11 +122,12 @@ medHomepageArea::medHomepageArea ( QWidget * parent ) : QWidget ( parent ), d ( 
     settingsButton->setToolButtonStyle ( Qt::ToolButtonTextBesideIcon );
     QObject::connect ( settingsButton,SIGNAL ( clicked() ),this, SLOT ( onShowSettings() ) );
 
-    userButtonsLayout->insertWidget ( 0, settingsButton );
-    userButtonsLayout->insertWidget ( 1, pluginButton );
-    userButtonsLayout->insertWidget ( 2, aboutButton );
-    userButtonsLayout->insertWidget ( 3, logButton );
-    userButtonsLayout->insertWidget ( 3, helpButton );
+    userButtonsLayout->addWidget (settingsButton);
+    userButtonsLayout->addWidget (pluginButton);
+    userButtonsLayout->addWidget (aboutButton);
+    userButtonsLayout->addWidget (helpButton);
+    userButtonsLayout->addWidget (logButton);
+    userButtonsLayout->setSpacing(0);
 
     // Info widget : medInria logo, medInria description, etc. QtWebkit ?
     QVBoxLayout * infoLayout = new QVBoxLayout(d->infoWidget);
@@ -144,6 +145,7 @@ medHomepageArea::medHomepageArea ( QWidget * parent ) : QWidget ( parent ), d ( 
         break;
     case 1:
     case 2:
+    case 3:
         qssLogoName = ":music_logo_light.png";
         break;
     }

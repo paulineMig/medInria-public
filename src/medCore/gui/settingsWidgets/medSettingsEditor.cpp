@@ -203,6 +203,7 @@ void medSettingsEditor::initialize()
     buttonLayout->addWidget(d->reset,1);
     buttonLayout->addWidget(d->cancel,1);
     buttonLayout->addWidget(d->save,1);
+    buttonLayout->setSpacing(0);
     vLayout->addLayout(buttonLayout);
 
 

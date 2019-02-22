@@ -203,5 +203,6 @@
         <file>icons/movie_grey_blue.png</file>
         <file>icons/adjust_size_grey_blue.png</file>
         <file>pixmaps/radio_blue.png</file>
+        <file>music_darkGrey.qss</file>
     </qresource>
 </RCC>

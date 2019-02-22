@@ -171,6 +171,10 @@ void medApplication::initialize()
         qssFile = ":/music_lightGrey.qss";
         this->setWindowIcon(QIcon(":music_logo_small_light.png"));
         break;
+    case 3:
+        qssFile = ":/music_darkGrey.qss";
+        this->setWindowIcon(QIcon(":music_logo_small_light.png"));
+        break;
     }
     medStyleSheetParser parser(dtkReadFile(qssFile));
     this->setStyleSheet(parser.result());
