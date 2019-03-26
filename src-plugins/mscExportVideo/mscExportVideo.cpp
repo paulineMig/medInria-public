@@ -9,6 +9,12 @@
 #include <vtkQImageToImageSource.h>
 #include <vtkSmartPointer.h>
 
+#if defined(_WIN32) || defined(__linux__)
+#include <vtkMPEG2Writer.h>
+#else // Mac
+#include <vtkFFMPEGWriter.h>
+#endif
+
 // /////////////////////////////////////////////////////////////////
 // ExportVideoPrivate
 // /////////////////////////////////////////////////////////////////
@@ -152,7 +158,7 @@ int ExportVideo::update()
                 res = this->exportAsVideo();
             }
 
-            qDebug()<<"### ExportVideo::update END OF ENCODING";
+            qDebug()<<"### ExportVideo::update END OF ENCODING -- "<<res;
 
             return res;
         }
@@ -203,35 +209,69 @@ int ExportVideo::exportAsVideo()
     source->SetNumberOfScalarComponents(3);
     source->SetExtent(0, d->width-1, 0, d->height-1, 0, 0);
 
+    vtkSmartPointer<vtkGenericMovieWriter> writerVideo;
+
     if (d->format == OGGVORBIS)
     {
-        vtkSmartPointer<vtkOggTheoraWriter> writerVideo = vtkSmartPointer<vtkOggTheoraWriter>::New();
-        writerVideo->SetInputConnection(source->GetOutputPort());
-        writerVideo->SetFileName(d->filename.toStdString().c_str());
-        writerVideo->SetRate(d->frameRate);
-        writerVideo->SetSubsampling(d->subsampling); // OGG/OGV parameter
-        writerVideo->SetQuality(d->quality);
-        writerVideo->Start();
+        vtkSmartPointer<vtkOggTheoraWriter> writerVideoTmp = vtkSmartPointer<vtkOggTheoraWriter>::New();
+        writerVideoTmp->SetInputConnection(source->GetOutputPort());
+        writerVideoTmp->SetFileName(d->filename.toStdString().c_str());
+        writerVideoTmp->SetRate(d->frameRate);
+        writerVideoTmp->SetSubsampling(d->subsampling);
+        writerVideoTmp->SetQuality(d->quality);
 
-        foreach (QImage qimage, d->imagesArray)
-        {
-            // Qt to VTK images (vtkImageData)
-            vtkSmartPointer<vtkQImageToImageSource> qimageToImageSource = vtkSmartPointer<vtkQImageToImageSource>::New();
-            qimageToImageSource->SetQImage(&qimage);
-            qimageToImageSource->Update();
-            vtkImageData* vtkImage = qimageToImageSource->GetOutput();
-
-            source->DrawImage(0, 0, vtkImage);
-            source->Update();
-
-            writerVideo->Write();
-        }
-
-        writerVideo->End();
-
-        return medAbstractProcess::SUCCESS;
+        writerVideo = writerVideoTmp;
     }
-    return medAbstractProcess::FAILURE;
+    else
+    {
+#if defined(_WIN32) || defined(__linux__)
+        if (d->format == MPEG2)
+        {
+            vtkSmartPointer<vtkMPEG2Writer> writerVideoTmp = vtkSmartPointer<vtkMPEG2Writer>::New();
+            writerVideoTmp->SetInputConnection(source->GetOutputPort());
+            writerVideoTmp->SetFileName(d->filename.toStdString().c_str());
+
+            writerVideo = writerVideoTmp;
+        }
+        else
+        {
+            return medAbstractProcess::FAILURE;
+        }
+#else
+        if (d->format == FFMPEG)
+        {
+            vtkSmartPointer<vtkFFMPEGWriter> writerVideoTmp = vtkSmartPointer<vtkFFMPEGWriter>::New();
+            writerVideoTmp->SetInputConnection(source->GetOutputPort());
+            writerVideoTmp->SetFileName(d->filename.toStdString().c_str());
+            writerVideoTmp->SetRate(d->frameRate);
+            writerVideo = writerVideoTmp;
+        }
+        else
+        {
+            return medAbstractProcess::FAILURE;
+        }
+#endif
+    }
+	
+    writerVideo->Start();
+
+    foreach (QImage qimage, d->imagesArray)
+    {
+        // Qt to VTK images (vtkImageData)
+        vtkSmartPointer<vtkQImageToImageSource> qimageToImageSource = vtkSmartPointer<vtkQImageToImageSource>::New();
+        qimageToImageSource->SetQImage(&qimage);
+        qimageToImageSource->Update();
+        vtkImageData* vtkImage = qimageToImageSource->GetOutput();
+
+        source->DrawImage(0, 0, vtkImage);
+        source->Update();
+
+        writerVideo->Write();
+    }
+
+    writerVideo->End();
+
+    return medAbstractProcess::SUCCESS;
 }
 
 int ExportVideo::displayFileDialog()
@@ -258,8 +298,13 @@ int ExportVideo::displayFileDialog()
     // The Xiph.Org Foundation decided to create a new set of file extensions and media types to describe different
     // types of content such as .oga for audio only files, .ogv for video with or without sound (including Theora),
     // and .ogx for multiplexed Ogg."
-    d->formatComboBox->addItem("Ogg Vorbis (.ogv)", 0);
-    d->formatComboBox->addItem("JPEG (.jpg .jpeg)", 1);
+    d->formatComboBox->addItem("Ogg Vorbis (.ogv)", OGGVORBIS);
+    d->formatComboBox->addItem("JPEG (.jpg .jpeg)", JPGBATCH);
+#if defined(_WIN32) || defined(__linux__)
+    d->formatComboBox->addItem("MPEG2 (.avi)", MPEG2);
+#else
+    d->formatComboBox->addItem("FFMPEG (.avi)", FFMPEG);
+#endif
     d->formatComboBox->setCurrentIndex(d->format);
     gridbox->addWidget(new QLabel("Format", d->exportDialog), gridbox->rowCount()-1, 0);
     gridbox->addWidget(d->formatComboBox, gridbox->rowCount()-1, 1);
@@ -305,7 +350,7 @@ int ExportVideo::displayFileDialog()
         {
             // Get back chosen parameters
             d->filename = filename;
-            d->format = d->formatComboBox->currentIndex();
+            d->format = d->formatComboBox->itemData(d->formatComboBox->currentIndex()).toInt();
             d->frameRate = d->frameRateSpinBox->value();
             d->subsampling = d->subsamplingComboBox->currentIndex()? false:true;
             d->quality = d->qualityComboBox->currentIndex();
@@ -323,30 +368,54 @@ void ExportVideo::handleWidgetDisplayAccordingToType(int index)
 {
     switch (index)
     {
-    case OGGVORBIS: default:
-    {
-        // Video
-        d->exportDialog->selectFile("video.ogv");
-        d->frameRateSpinBox->show();
-        d->frameRateLabel->show();
-        d->subsamplingComboBox->show();
-        d->subsamplingLabel->show();
-        d->qualityComboBox->show();
-        d->qualityLabel->show();
-        break;
-    }
-    case JPGBATCH:
-    {
-        // JPEG
-        d->exportDialog->selectFile("image0.jpg");
-        d->frameRateSpinBox->hide();
-        d->frameRateLabel->hide();
-        d->subsamplingComboBox->hide();
-        d->subsamplingLabel->hide();
-        d->qualityComboBox->hide();
-        d->qualityLabel->hide();
-        break;
-    }
+        case OGGVORBIS: default:
+        {
+            // Video
+            d->exportDialog->selectFile("video.ogv");
+            d->frameRateSpinBox->show();
+            d->frameRateLabel->show();
+            d->subsamplingComboBox->show();
+            d->subsamplingLabel->show();
+            d->qualityComboBox->show();
+            d->qualityLabel->show();
+            break;
+        }
+        case JPGBATCH:
+        {
+            // JPEG
+            d->exportDialog->selectFile("image0.jpg");
+            d->frameRateSpinBox->hide();
+            d->frameRateLabel->hide();
+            d->subsamplingComboBox->hide();
+            d->subsamplingLabel->hide();
+            d->qualityComboBox->hide();
+            d->qualityLabel->hide();
+            break;
+        }
+        case FFMPEG:
+        {
+            // Video
+            d->exportDialog->selectFile("video.avi");
+            d->frameRateSpinBox->show();
+            d->frameRateLabel->show();
+            d->subsamplingComboBox->hide();
+            d->subsamplingLabel->hide();
+            d->qualityComboBox->hide();
+            d->qualityLabel->hide();
+            break;
+        }
+        case MPEG2:
+        {
+            // Video
+            d->exportDialog->selectFile("video.avi");
+            d->frameRateSpinBox->hide();
+            d->frameRateLabel->hide();
+            d->subsamplingComboBox->hide();
+            d->subsamplingLabel->hide();
+            d->qualityComboBox->hide();
+            d->qualityLabel->hide();
+            break;
+        }
     }
 }
 
