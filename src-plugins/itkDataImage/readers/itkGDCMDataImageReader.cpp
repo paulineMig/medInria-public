@@ -237,6 +237,9 @@ bool itkGDCMDataImageReader::canRead(const QStringList &paths) {
 bool itkGDCMDataImageReader::readInformation(const QString &path) {
     QStringList paths;
     paths << path;
+
+    qDebug("itkGDCMDataImageReader::readInformation");
+
     return readInformation(paths);
 }
 
@@ -490,6 +493,8 @@ bool itkGDCMDataImageReader::read (const QStringList &paths)
 
 
     d->io->RemoveAllObservers ();
+
+    qDebug("itkGDCMDataImageReader::read");
 
     return true;
 }

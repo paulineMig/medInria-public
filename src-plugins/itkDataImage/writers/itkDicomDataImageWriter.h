@@ -29,4 +29,12 @@ public:
     static bool registered();
 
     static dtkAbstractDataWriter * create();
+
+    QString sopClassUID(QString modality);
+
+public slots:
+    virtual bool write(const QString &path);
+
+protected:
+    template <class PixelType> bool writeDicom(const QString &path);
 };

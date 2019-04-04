@@ -102,6 +102,8 @@ void itkDataImageWriterBase::encapsulateMetaData()
 
 bool itkDataImageWriterBase::write(const QString& path)
 {
+    qDebug() << "coucou: itkDataImageWriterBase::write";
+
     if (!this->data())
         return false;
 
