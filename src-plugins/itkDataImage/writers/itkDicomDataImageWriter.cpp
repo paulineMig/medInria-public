@@ -4,7 +4,7 @@
 
  Copyright (c) INRIA 2013 - 2014. All rights reserved.
  See LICENSE.txt for details.
- 
+
   This software is distributed WITHOUT ANY WARRANTY; without even
   the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
   PURPOSE.
@@ -110,11 +110,13 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
 {
     //Trick to use QString with accent
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+    //Useful when writting Image position and orientiation matrice
+    QLocale sysLocal(QLocale::system());
 
-    QString filename = path.left(path.length() - 4);
-
-    itk::Object* itkImage = static_cast<itk::Object*>(data()->data());
-    //qDebug() <<  "----------------------" << data()->identifier() <<  "----------------------";
+    QString filePath = path.left(path.length() - 4);
+    QFileInfo fi(path);
+    QString filenameWithExt = fi.fileName();
+    QString filename =  filenameWithExt.left(filenameWithExt.length() - 4);
 
     typedef itk::Image<PixelType,3> Image3DType;
     typedef itk::Image<PixelType,2> Image2DType;
@@ -122,6 +124,7 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
     typedef itk::GDCMImageIO ImageIOType;
     typedef itk::MetaDataDictionary DictionaryType;
 
+    itk::Object* itkImage = static_cast<itk::Object*>(data()->data());
     typename Image3DType::Pointer image = dynamic_cast<Image3DType*>(itkImage);
     typename ImageIOType::Pointer gdcmIO = ImageIOType::New();
 
@@ -129,41 +132,19 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
     std::ostringstream value;
     DictionaryType dictionary;
 
-
-
-//    itk::MetaDataDictionary& metaDataDictionary = image->GetMetaDataDictionary();
-//    DictionaryType::ConstIterator itr = metaDataDictionary.Begin();
-//    DictionaryType::ConstIterator end = metaDataDictionary.End();
-//    typedef itk::MetaDataObject< std::string > MetaDataStringType;
-
-//    while( itr != end )
-//    {
-//        itk::MetaDataObjectBase::Pointer  entry = itr->second;
-//        MetaDataStringType::Pointer entryvalue = dynamic_cast<MetaDataStringType *>( entry.GetPointer() ) ;
-//        if( entryvalue )
-//        {
-//            std::string tagkey   = itr->first;
-//            std::string tagvalue = entryvalue->GetMetaDataObjectValue();
-//            // itk::EncapsulateMetaData<std::string>(toDict, tagkey, tagvalue);
-
-//            qDebug() << QString::fromStdString(tagkey) << " : " << QString::fromStdString(tagvalue);
-//        }
-//        ++itr;
-//    }
-
-
     double spacing[3];
     spacing[0] = image->GetSpacing()[0];
     spacing[1] = image->GetSpacing()[1];
     spacing[2] = image->GetSpacing()[2];
 
-   // qDebug() << spacing[0] << ", " << spacing[1] << ", " << spacing[2] ;
+    int imDim[3];
+    imDim[0]= image->GetLargestPossibleRegion().GetSize()[0];
+    imDim[1]= image->GetLargestPossibleRegion().GetSize()[1];
+    imDim[2]= image->GetLargestPossibleRegion().GetSize()[2];
 
-
-   // qDebug() <<  "--------------------------------------------------";
+    //Get metaDataKey from data
     foreach (QString metaDataKey, data()->metaDataList())
     {
-        //qDebug() << metaDataKey << ": " << data()->metadata(metaDataKey);
         if(metaDataKey == QString("Columns"))
         {
             //Columns
@@ -174,16 +155,11 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
             //Rows
             itk::EncapsulateMetaData<std::string>(dictionary, "0028|0010", data()->metadata(metaDataKey).toStdString());
         }
-        if ( metaDataKey == QString("SliceThickness"))
+        if(metaDataKey == QString("Size"))
         {
-            // Slice Thickness
-           // itk::EncapsulateMetaData<std::string>(dictionary, "0018|0050", data()->metadata(metaDataKey).toStdString());
+            numberOfSlices =std::stoi(data()->metadata(metaDataKey).toStdString());
         }
-        if (metaDataKey == QString("Orientation"))
-        {
-            // Image Orientation (Patient)
-            itk::EncapsulateMetaData<std::string>(dictionary, "0020|0037", data()->metadata(metaDataKey).toStdString());
-        }
+
         if(metaDataKey == QString("FlipAngle"))
         {
             //Flip angle
@@ -236,18 +212,6 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
             // Series Number
             itk::EncapsulateMetaData<std::string>(dictionary, "0020|0011",  data()->metadata(metaDataKey).toStdString());
         }
-//        if(metaDataKey == QString("SeriesID"))
-//        {
-//            // Series instance UID
-//            /* We use as Series instance UID the new unique ID created by medinria database and not the one comming from
-//             * original data*/
-//            itk::EncapsulateMetaData<std::string>(dictionary, "0020|000e",  data()->metadata(metaDataKey).toStdString());
-//        }
-//        if(metaDataKey == QString("SeriesInstanceUID"))
-//        {
-//            // Series instance UID
-//            itk::EncapsulateMetaData<std::string>(dictionary, "0020|000e",  data()->metadata(metaDataKey).toStdString());
-//        }
         if(metaDataKey == QString("Referee"))
         {
             //Referee physician name
@@ -268,17 +232,20 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
             //RepetitionTime
             itk::EncapsulateMetaData<std::string>(dictionary, "0018|0080", data()->metadata(metaDataKey).toStdString());
         }
-//        if(metaDataKey == QString("StudyID"))
-//        {
-//            // Study Id
-////            itk::EncapsulateMetaData<std::string>(dictionary, "0020|0010",  data()->metadata(metaDataKey).toStdString());
-//            itk::EncapsulateMetaData<std::string>(dictionary, "0020|000d",  data()->metadata(metaDataKey).toStdString());
-//        }
+        if(metaDataKey == QString("Descriptions"))
+        {
+            //Scan options
+            itk::EncapsulateMetaData<std::string>(dictionary, "0018|0022", data()->metadata(metaDataKey).toStdString());
+        }
         if(metaDataKey == QString("StudyInstanceUID"))
         {
-           // Study Dicom Id
-           itk::EncapsulateMetaData<std::string>(dictionary, "0020|000d",  data()->metadata(metaDataKey).toStdString());
-//            itk::EncapsulateMetaData<std::string>(dictionary, "0020|0010",  data()->metadata(metaDataKey).toStdString());
+            // Study Instance UID
+            itk::EncapsulateMetaData<std::string>(dictionary, "0020|000d",  data()->metadata(metaDataKey).toStdString());
+        }
+        if(metaDataKey == QString("StudyID"))
+        {
+            // Study ID
+            itk::EncapsulateMetaData<std::string>(dictionary, "0020|0010",  data()->metadata(metaDataKey).toStdString());
         }
         if(metaDataKey == QString("StudyDescription"))
         {
@@ -305,52 +272,37 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
             // Sequence Name
             itk::EncapsulateMetaData<std::string>(dictionary, "0018|0024", data()->metadata(metaDataKey).toStdString());
         }
-        if(metaDataKey == QString("Size"))
+        if(metaDataKey == QString("Repetition"))
         {
-             numberOfSlices =std::stoi(data()->metadata(metaDataKey).toStdString());
+            // Sequence Name
+            itk::EncapsulateMetaData<std::string>(dictionary, "0018|0080", data()->metadata(metaDataKey).toStdString());
         }
-
     }
-    //qDebug() <<  "--------------------------------------------------";
 
+    //Spacing
     value.str("");
     value << spacing[0] << "\\" << spacing[1];
     itk::EncapsulateMetaData<std::string>(dictionary, "0028|0030", value.str());
+
     // Slice Thickness
     value.str("");
     value << spacing[2];
     itk::EncapsulateMetaData<std::string>(dictionary, "0018|0050", value.str() );
 
-    // Patient's Comments
-    itk::EncapsulateMetaData<std::string>(dictionary, "0010|4000", "patientComments");
-    // Study Comments
-    itk::EncapsulateMetaData<std::string>(dictionary, "0032|4000", "studyComments");
-
-    //qDebug() << "size = " <<  numberOfSlices ;
-
-    typename Image3DType::PointType originBis = image->GetOrigin();
-    typename Image3DType::DirectionType oMatrix = image->GetDirection();
-    typename Image3DType::IndexType indexBis;
-    image->TransformPhysicalPointToIndex(originBis, indexBis);
-
-    value.str("");
-    value << originBis[0] << "\\" << originBis[1] << "\\" << originBis[2];
-    std::cout << "Origin image:" << value.str() << std::endl;
-
-    value.str("");
-    value << indexBis[0] << "\\" << indexBis[1] << "\\" << indexBis[2];
-    std::cout << "Index image:" << value.str() << std::endl;
-
     // Image Orientation (Patient)
-    value.str("");
-    value << std::setprecision(15) << oMatrix[0][0] << "\\" << oMatrix[1][0] << "\\" << oMatrix[2][0] << "\\";
-    value << std::setprecision(15) << oMatrix[0][1] << "\\" << oMatrix[1][1] << "\\" << oMatrix[2][1];
+    typename Image3DType::DirectionType oMatrix = image->GetDirection();
 
-    std::cout << "orientationMatrice : " << value.str() << std::endl;
+    QString orientationPatientMatrice = QString::number(oMatrix[0][0]) + "\\" + QString::number(oMatrix[1][0]) + "\\"
+            + QString::number(oMatrix[2][0]) + "\\" + QString::number(oMatrix[0][1]) +
+            "\\" + QString::number(oMatrix[1][1])  + "\\" + QString::number(oMatrix[2][1]);
+    orientationPatientMatrice = orientationPatientMatrice.simplified();
 
-    itk::EncapsulateMetaData<std::string>(dictionary, "0020|0037", value.str() );
+    if( QString (sysLocal.decimalPoint()).toStdString() == ",")
+    {
+        orientationPatientMatrice.replace( ".", "," );
+    }
 
-    std::cout << "------------------------------------" << std::endl;
+    itk::EncapsulateMetaData<std::string>(dictionary, "0020|0037", orientationPatientMatrice.toStdString() );
 
 
     // To keep the new series in the same study as the original we need
@@ -377,46 +329,22 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
         // Instance Number
         itk::EncapsulateMetaData<std::string>(dictionary, "0020|0013",std::to_string(slice + 1) );
 
-
-
         typename Image3DType::PointType origin;
         typename Image3DType::IndexType index;
         index.Fill(0);
         index[2] = slice;
 
-        // Image Orientation (Patient)
+        // Image Position Patient
         image->TransformIndexToPhysicalPoint(index, origin);
 
-//        QLocale sysLocal(QLocale::system());
-//        QString orientation =sysLocal.toString(origin[0], 'f', 4) + "\\" + sysLocal.toString(origin[1], 'f', 4) + "\\" + sysLocal.toString(origin[2], 'f', 4);
-//        orientation = orientation.simplified();
-//        orientation.replace( " ", "" );
-//        QLocale frLocal(QLocale::French);
-//        QString orientation =frLocal.toString(origin[0], 'f', 6) + "\\" + frLocal.toString(origin[1], 'f', 6) + "\\" + frLocal.toString(origin[2], 'f', 6);
-//        orientation = orientation.simplified();
-//        orientation.replace( " ", "" );
-//        value.str("");
-//        value << std::trunc(origin[0]) << "\\" << std::trunc(origin[1]) << "\\" << std::trunc(origin[2]);
-//        std::cout << "Position :" << value.str() << std::endl;
-//        itk::EncapsulateMetaData<std::string>(dictionary, "0020|0032", value.str() );
-
-
-//        QByteArray toto(50,'0');
-//        QString totoString(toto);
-       QString orientation =QString::number(origin[0]) + "\\" + QString::number(origin[1]) + "\\" + QString::number(origin[2]);
+        QString orientation =QString::number(origin[0]) + "\\" + QString::number(origin[1]) + "\\" + QString::number(origin[2]);
         orientation = orientation.simplified();
-        orientation.replace( ".", "," );
 
-        std::cout <<orientation.toStdString() << std::endl;
+        if( QString (sysLocal.decimalPoint()).toStdString() == ",")
+        {
+           orientation.replace( ".", "," );
+        }
         itk::EncapsulateMetaData<std::string>(dictionary, "0020|0032", orientation.toStdString() );
-//        itk::EncapsulateMetaData<std::string>(dictionary, "0020|0032", totoString.toStdString() );
-
-        // Slice Location: For now, we store the z component of the Image
-        // Position Patient.
-        value.str("");
-        value << origin[2];
-       // std::cout << "Location slice nb " << slice + 1 << " :" << value.str() << std::endl;
-      //  itk::EncapsulateMetaData<std::string>(dictionary,"0020|1041", value.str());
 
         typename Image3DType::RegionType extractRegion;
         typename Image3DType::SizeType   extractSize;
@@ -460,11 +388,13 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
         value.str("");
         value << windowWidth;
         itk::EncapsulateMetaData<std::string>(dictionary, "0028|1051", value.str() );
-        // Image type
-        //itk::EncapsulateMetaData<std::string>(dictionary, "0008|0008", std::string("ORIGINAL\\PRIMARY\\AXIAL") );
-        //itk::EncapsulateMetaData<std::string>(dictionary, "0008|0008", std::string("ORIGINAL\\PRIMARY\\M\\NORM\\DIS2D") );
 
-        QString newFilename = filename + "-0001-" + QString::number(1000+slice) + "-0001" + path.right(4);
+        QDir dir(filePath);
+        if (!dir.exists())
+        {
+            dir.mkpath(".");
+        }
+        QString newFilename = filePath +"/"+ filename + "-" + QString::number(1000+slice) + path.right(4);
 
         typename WriterType::Pointer writer = WriterType::New();
         writer->SetFileName(newFilename.toStdString());
@@ -492,61 +422,61 @@ bool itkDicomDataImageWriter::write(const QString &path)
     if (!this->data())
         return false;
 
-      QString id = data()->identifier() ;
+    QString id = data()->identifier() ;
 
-      try {
-          if ( id == "itkDataImageChar3" )
-          {
-              writeDicom<char>(path);
-          }
-          else if ( id == "itkDataImageUChar3" )
-          {
-              writeDicom<unsigned char>(path);
-          }
-          else if ( id == "itkDataImageShort3" )
-          {
-              writeDicom<short>(path);
-          }
-          else if ( id == "itkDataImageUShort3" )
-          {
-              writeDicom<unsigned short>(path);
-          }
-          else if ( id == "itkDataImageInt3" )
-          {
-              writeDicom<int>(path);
-          }
-          else if ( id == "itkDataImageUInt3" )
-          {
-              writeDicom<unsigned int>(path);
-          }
-          else if ( id == "itkDataImageLong3" )
-          {
-              writeDicom<long>(path);
-          }
-          else if ( id== "itkDataImageULong3" )
-          {
-              writeDicom<unsigned long>(path);
-          }
-          else if ( id == "itkDataImageFloat3" )
-          {
-              writeDicom<float>(path);
-          }
-          else if ( id == "itkDataImageDouble3" )
-          {
-              writeDicom<double>(path);
-          }
-          else
-          {
-              qWarning() << "Pixel type not supported";
-              return false;
-          }
-
-      }
-      catch(itk::ExceptionObject &e) {
-          qDebug() << e.GetDescription();
-          return false;
-      }
-      return true;
+    try {
+        if ( id == "itkDataImageChar3" )
+        {
+            writeDicom<char>(path);
+        }
+        else if ( id == "itkDataImageUChar3" )
+        {
+            writeDicom<unsigned char>(path);
+        }
+        else if ( id == "itkDataImageShort3" )
+        {
+            writeDicom<short>(path);
+        }
+        else if ( id == "itkDataImageUShort3" )
+        {
+            writeDicom<unsigned short>(path);
+        }
+        else if ( id == "itkDataImageInt3" )
+        {
+            writeDicom<int>(path);
+        }
+        else if ( id == "itkDataImageUInt3" )
+        {
+            writeDicom<unsigned int>(path);
+        }
+        else if ( id == "itkDataImageLong3" )
+        {
+            writeDicom<long>(path);
+        }
+        else if ( id== "itkDataImageULong3" )
+        {
+            writeDicom<unsigned long>(path);
+        }
+        else if ( id == "itkDataImageFloat3" )
+        {
+            writeDicom<float>(path);
+        }
+        else if ( id == "itkDataImageDouble3" )
+        {
+            writeDicom<double>(path);
+        }
+        else
+        {
+            qWarning() << "Pixel type not yet supported";
+            return false;
+        }
+    }
+    catch(itk::ExceptionObject &e)
+    {
+        qDebug() << e.GetDescription();
+        return false;
+    }
+    return true;
 }
 
 // /////////////////////////////////////////////////////////////////

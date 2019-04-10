@@ -263,9 +263,6 @@ bool itkDCMTKDataImageReader::readInformation (const QString& path)
     QStringList paths;
     paths << path;
 
-
-    qDebug("itkDCMTKDataImageReader::readInformation");
-
     return readInformation ( paths );
 }
 
@@ -526,8 +523,6 @@ bool itkDCMTKDataImageReader::read(const QStringList& paths)
     }
 
     d->io->RemoveAllObservers();
-
-     qDebug("itkDCMTKDataImageReader::read");
 
     return true;
 }
