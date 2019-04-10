@@ -131,6 +131,7 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
     int  numberOfSlices =0;
     std::ostringstream value;
     DictionaryType dictionary;
+    bool studyUIDExistance = false;
 
     double spacing[3];
     spacing[0] = image->GetSpacing()[0];
@@ -240,7 +241,11 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
         if(metaDataKey == QString("StudyInstanceUID"))
         {
             // Study Instance UID
-            itk::EncapsulateMetaData<std::string>(dictionary, "0020|000d",  data()->metadata(metaDataKey).toStdString());
+            if(!data()->metadata(metaDataKey).trimmed().isEmpty())
+            {
+                studyUIDExistance = true;
+                itk::EncapsulateMetaData<std::string>(dictionary, "0020|000d",  data()->metadata(metaDataKey).toStdString());
+            }
         }
         if(metaDataKey == QString("StudyID"))
         {
@@ -304,6 +309,16 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
 
     itk::EncapsulateMetaData<std::string>(dictionary, "0020|0037", orientationPatientMatrice.toStdString() );
 
+    if (!studyUIDExistance)
+    {
+        gdcm::UIDGenerator stuuid;
+        std::string studyInstanceUID = stuuid.Generate();
+        itk::EncapsulateMetaData<std::string>(dictionary, "0020|000d", studyInstanceUID);
+    }
+    else
+    {
+        gdcmIO->SetKeepOriginalUID(true);
+    }
 
     // To keep the new series in the same study as the original we need
     // to keep the same study UID. But we need new series and frame of
@@ -312,8 +327,6 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
     std::string seriesUID = suid.Generate();
     gdcm::UIDGenerator fuid;
     std::string frameOfReferenceUID = fuid.Generate();
-
-    gdcmIO->SetKeepOriginalUID(true);
 
     // Set the UID's for the study  and frame of reference
     itk::EncapsulateMetaData<std::string>(dictionary,"0020|000e", seriesUID);
