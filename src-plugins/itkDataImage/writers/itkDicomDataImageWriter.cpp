@@ -111,7 +111,8 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
     //Trick to use QString with accent
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
     //Useful when writting Image position and orientiation matrice
-    QLocale sysLocal(QLocale::system());
+    setlocale(LC_NUMERIC, "C");
+    QLocale::setDefault(QLocale("C"));
 
     QString filePath = path.left(path.length() - 4);
     QFileInfo fi(path);
@@ -300,12 +301,6 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
     QString orientationPatientMatrice = QString::number(oMatrix[0][0]) + "\\" + QString::number(oMatrix[1][0]) + "\\"
             + QString::number(oMatrix[2][0]) + "\\" + QString::number(oMatrix[0][1]) +
             "\\" + QString::number(oMatrix[1][1])  + "\\" + QString::number(oMatrix[2][1]);
-    orientationPatientMatrice = orientationPatientMatrice.simplified();
-
-    if( QString (sysLocal.decimalPoint()).toStdString() == ",")
-    {
-        orientationPatientMatrice.replace( ".", "," );
-    }
 
     itk::EncapsulateMetaData<std::string>(dictionary, "0020|0037", orientationPatientMatrice.toStdString() );
 
@@ -351,12 +346,6 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
         image->TransformIndexToPhysicalPoint(index, origin);
 
         QString orientation =QString::number(origin[0]) + "\\" + QString::number(origin[1]) + "\\" + QString::number(origin[2]);
-        orientation = orientation.simplified();
-
-        if( QString (sysLocal.decimalPoint()).toStdString() == ",")
-        {
-           orientation.replace( ".", "," );
-        }
         itk::EncapsulateMetaData<std::string>(dictionary, "0020|0032", orientation.toStdString() );
 
         typename Image3DType::RegionType extractRegion;
