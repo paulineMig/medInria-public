@@ -14,7 +14,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 if(NOT DEFINED ${medInria_VERSION})
-    set(medInria_VERSION 2.3.0)
+    set(medInria_VERSION 2.4.0)
 endif()
 
 project(MEDINRIA VERSION ${medInria_VERSION})
@@ -95,6 +95,12 @@ if (WIN32)
     include_directories(${${PROJECT_NAME}_INCLUDE_DIRS}
 ${Boost_INCLUDE_DIR})
 endif()
+
+find_package(DCMTK REQUIRED)
+# Do this once and for all
+if(APPLE)
+  FixDCMTKMacInstall("${DCMTK_LIBRARIES}" "${DCMTK_LIBRARIES}" "${DCMTK_DIR}")
+endif(APPLE)
 
 
 ## #############################################################################

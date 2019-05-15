@@ -474,6 +474,7 @@ AlgorithmPaintToolBox::AlgorithmPaintToolBox(QWidget *parent ) :
 AlgorithmPaintToolBox::~AlgorithmPaintToolBox()
 {
     setOfPaintBrushRois.clear();
+    this->clear();
 }
 
 medAbstractData* AlgorithmPaintToolBox::processOutput()
@@ -740,7 +741,8 @@ void AlgorithmPaintToolBox::updateView()
             slicingParameter = nullptr;
             foreach (medAbstractInteractor* interactor, qobject_cast<medAbstractLayeredView*>(currentView)->layerInteractors(0))
             {
-                if (interactor->identifier() == "medVtkViewItkDataImageInteractor")
+                if ((interactor->identifier() == "medVtkViewItkDataImageInteractor") ||
+                        (interactor->identifier() == "medVtkViewItkDataImage4DInteractor"))
                 {
                     foreach (medAbstractParameter* parameter, interactor->linkableParameters())
                     {
