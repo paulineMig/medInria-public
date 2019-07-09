@@ -18,7 +18,6 @@
 
 
 #include <itkExtractImageFilter.h>
-#include <itkGDCMImageIO.h>
 #include <itkImage.h>
 #include <itkImageFileWriter.h>
 #include <itkMetaDataObject.h>
@@ -45,7 +44,7 @@ static QStringList s_handled() {
 }
 
 itkDicomDataImageWriter::itkDicomDataImageWriter(): itkDataImageWriterBase() {
-    this->io = itk::GDCMImageIO::New();
+    this->io = itk::GDCMImageIO::New();    
 }
 
 itkDicomDataImageWriter::~itkDicomDataImageWriter()
@@ -106,62 +105,11 @@ QString itkDicomDataImageWriter::sopClassUID(QString modality)
     }
 }
 
-template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QString &path)
+void itkDicomDataImageWriter::fillDictionaryFromMetaDataKey(itk::MetaDataDictionary &dictionary, bool &studyUIDExistance)
 {
-    //Trick to use QString with accent
-    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
-    //Useful when writting Image position and orientiation matrice
-    setlocale(LC_NUMERIC, "C");
-    QLocale::setDefault(QLocale("C"));
-
-    QString filePath = path.left(path.length() - 4);
-    QFileInfo fi(path);
-    QString filenameWithExt = fi.fileName();
-    QString filename =  filenameWithExt.left(filenameWithExt.length() - 4);
-
-    typedef itk::Image<PixelType,3> Image3DType;
-    typedef itk::Image<PixelType,2> Image2DType;
-    typedef itk::ImageFileWriter<Image2DType> WriterType;
-    typedef itk::GDCMImageIO ImageIOType;
-    typedef itk::MetaDataDictionary DictionaryType;
-
-    itk::Object* itkImage = static_cast<itk::Object*>(data()->data());
-    typename Image3DType::Pointer image = dynamic_cast<Image3DType*>(itkImage);
-    typename ImageIOType::Pointer gdcmIO = ImageIOType::New();
-
-    int  numberOfSlices =0;
-    std::ostringstream value;
-    DictionaryType dictionary;
-    bool studyUIDExistance = false;
-
-    double spacing[3];
-    spacing[0] = image->GetSpacing()[0];
-    spacing[1] = image->GetSpacing()[1];
-    spacing[2] = image->GetSpacing()[2];
-
-    int imDim[3];
-    imDim[0]= image->GetLargestPossibleRegion().GetSize()[0];
-    imDim[1]= image->GetLargestPossibleRegion().GetSize()[1];
-    imDim[2]= image->GetLargestPossibleRegion().GetSize()[2];
-
     //Get metaDataKey from data
     foreach (QString metaDataKey, data()->metaDataList())
     {
-        if(metaDataKey == QString("Columns"))
-        {
-            //Columns
-            itk::EncapsulateMetaData<std::string>(dictionary, "0028|0011", data()->metadata(metaDataKey).toStdString());
-        }
-        if(metaDataKey == QString("Rows"))
-        {
-            //Rows
-            itk::EncapsulateMetaData<std::string>(dictionary, "0028|0010", data()->metadata(metaDataKey).toStdString());
-        }
-        if(metaDataKey == QString("Size"))
-        {
-            numberOfSlices =std::stoi(data()->metadata(metaDataKey).toStdString());
-        }
-
         if(metaDataKey == QString("FlipAngle"))
         {
             //Flip angle
@@ -285,135 +233,215 @@ template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QStrin
         }
     }
 
-    //Spacing
-    value.str("");
-    value << spacing[0] << "\\" << spacing[1];
-    itk::EncapsulateMetaData<std::string>(dictionary, "0028|0030", value.str());
+}
 
-    // Slice Thickness
-    value.str("");
-    value << spacing[2];
-    itk::EncapsulateMetaData<std::string>(dictionary, "0018|0050", value.str() );
+template <class PixelType> void itkDicomDataImageWriter::fillDictionaryWithSharedData(itk::MetaDataDictionary &dictionary, bool studyUIDExistance,
+                                                                                      itk::GDCMImageIO::Pointer gdcmIO, int &numberOfSlices)
+{
+        typedef itk::Image<PixelType,3> Image3DType;
 
-    // Image Orientation (Patient)
-    typename Image3DType::DirectionType oMatrix = image->GetDirection();
+        itk::Object* itkImage = static_cast<itk::Object*>(data()->data());
+        typename Image3DType::Pointer image = dynamic_cast<Image3DType*>(itkImage);
 
-    QString orientationPatientMatrice = QString::number(oMatrix[0][0]) + "\\" + QString::number(oMatrix[1][0]) + "\\"
-            + QString::number(oMatrix[2][0]) + "\\" + QString::number(oMatrix[0][1]) +
-            "\\" + QString::number(oMatrix[1][1])  + "\\" + QString::number(oMatrix[2][1]);
+        std::ostringstream value;
 
-    itk::EncapsulateMetaData<std::string>(dictionary, "0020|0037", orientationPatientMatrice.toStdString() );
+        double spacing[3];
+        spacing[0] = image->GetSpacing()[0];
+        spacing[1] = image->GetSpacing()[1];
+        spacing[2] = image->GetSpacing()[2];
 
-    if (!studyUIDExistance)
+        int imDim[3];
+        imDim[0]= image->GetLargestPossibleRegion().GetSize()[0];
+        imDim[1]= image->GetLargestPossibleRegion().GetSize()[1];
+        imDim[2]= image->GetLargestPossibleRegion().GetSize()[2];
+
+        numberOfSlices = imDim[2];
+
+        //Columns (X dimension)
+        value.str("");
+        value << imDim[0];
+        itk::EncapsulateMetaData<std::string>(dictionary, "0028|0011", value.str());
+
+        //Rows (Y dimension)
+        value.str("");
+        value << imDim[1];
+        itk::EncapsulateMetaData<std::string>(dictionary, "0028|0010", value.str());
+
+        //Spacing
+        value.str("");
+        value << spacing[0] << "\\" << spacing[1];
+        itk::EncapsulateMetaData<std::string>(dictionary, "0028|0030", value.str());
+
+        // Slice Thickness
+        value.str("");
+        value << spacing[2];
+        itk::EncapsulateMetaData<std::string>(dictionary, "0018|0050", value.str() );
+
+        // Image Orientation (Patient)
+        typename Image3DType::DirectionType oMatrix = image->GetDirection();
+
+        QString orientationPatientMatrix = QString::number(oMatrix[0][0]) + "\\" + QString::number(oMatrix[1][0]) + "\\"
+                + QString::number(oMatrix[2][0]) + "\\" + QString::number(oMatrix[0][1]) +
+                "\\" + QString::number(oMatrix[1][1])  + "\\" + QString::number(oMatrix[2][1]);
+
+        itk::EncapsulateMetaData<std::string>(dictionary, "0020|0037", orientationPatientMatrix.toStdString() );
+
+        if (!studyUIDExistance)
+        {
+            gdcm::UIDGenerator stuuid;
+            std::string studyInstanceUID = stuuid.Generate();
+            itk::EncapsulateMetaData<std::string>(dictionary, "0020|000d", studyInstanceUID);
+        }
+        else
+        {
+            gdcmIO->SetKeepOriginalUID(true);
+        }
+
+        // To keep the new series in the same study as the original we need
+        // to keep the same study UID. But we need new series and frame of
+        // reference UID's.
+        gdcm::UIDGenerator suid;
+        std::string seriesUID = suid.Generate();
+        gdcm::UIDGenerator fuid;
+        std::string frameOfReferenceUID = fuid.Generate();
+
+        // Set the UID's for the study  and frame of reference
+        itk::EncapsulateMetaData<std::string>(dictionary,"0020|000e", seriesUID);
+        itk::EncapsulateMetaData<std::string>(dictionary,"0020|0052", frameOfReferenceUID);
+
+}
+
+template <class PixelType> bool itkDicomDataImageWriter::fillDictionaryAndWriteDicomSlice(itk::MetaDataDictionary &dictionary, const QString &path,
+                                                                                          itk::GDCMImageIO::Pointer gdcmIO, int slice)
+{
+    //Trick to use QString with accent
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+
+    QString filePath = path.left(path.length() - 4);
+    QFileInfo fi(path);
+    QString filename =  fi.baseName();
+
+    typedef itk::Image<PixelType,3> Image3DType;
+    typedef itk::Image<PixelType,2> Image2DType;
+    typedef itk::ImageFileWriter<Image2DType> WriterType;
+    //typedef itk::GDCMImageIO ImageIOType;
+
+    itk::Object* itkImage = static_cast<itk::Object*>(data()->data());
+    typename Image3DType::Pointer image = dynamic_cast<Image3DType*>(itkImage);
+    //typename ImageIOType::Pointer gdcmIO = ImageIOType::New();
+
+    std::ostringstream value;
+
+    gdcm::UIDGenerator sopuid;
+    std::string sopInstanceUID = sopuid.Generate();
+    itk::EncapsulateMetaData<std::string>(dictionary,"0008|0018", sopInstanceUID);
+    itk::EncapsulateMetaData<std::string>(dictionary,"0002|0003", sopInstanceUID);
+
+    // Instance Number
+    itk::EncapsulateMetaData<std::string>(dictionary, "0020|0013",std::to_string(slice + 1) );
+
+    typename Image3DType::PointType origin;
+    typename Image3DType::IndexType index;
+    index.Fill(0);
+    index[2] = slice;
+
+    // Image Position Patient
+    image->TransformIndexToPhysicalPoint(index, origin);
+
+    QString orientation = QString::number(origin[0]) + "\\" + QString::number(origin[1]) + "\\" + QString::number(origin[2]);
+    itk::EncapsulateMetaData<std::string>(dictionary, "0020|0032", orientation.toStdString() );
+
+    typename Image3DType::RegionType extractRegion;
+    typename Image3DType::SizeType   extractSize;
+    typename Image3DType::IndexType  extractIndex;
+    extractSize = image->GetLargestPossibleRegion().GetSize();
+    extractIndex.Fill(0);
+    extractIndex[2] = slice;
+    extractSize[2] = 0;
+    extractRegion.SetSize(extractSize);
+    extractRegion.SetIndex(extractIndex);
+
+    typedef itk::ExtractImageFilter<Image3DType, Image2DType> ExtractType;
+    typename ExtractType::Pointer extract = ExtractType::New();
+    extract->SetDirectionCollapseToGuess();
+    extract->SetInput(image);
+    extract->SetExtractionRegion(extractRegion);
+    extract->GetOutput()->SetMetaDataDictionary(dictionary);
+    extract->Update();
+
+    itk::ImageRegionIterator<Image2DType> it( extract->GetOutput(), extract->GetOutput()->GetLargestPossibleRegion() );
+    typename Image2DType::PixelType minValue = itk::NumericTraits<typename Image2DType::PixelType>::max();
+    typename Image2DType::PixelType maxValue = itk::NumericTraits<typename Image2DType::PixelType>::min();
+    for( it.GoToBegin(); !it.IsAtEnd(); ++it )
     {
-        gdcm::UIDGenerator stuuid;
-        std::string studyInstanceUID = stuuid.Generate();
-        itk::EncapsulateMetaData<std::string>(dictionary, "0020|000d", studyInstanceUID);
+        typename Image2DType::PixelType p = it.Get();
+        if( p > maxValue )
+        {
+            maxValue = p;
+        }
+        if( p < minValue )
+        {
+            minValue = p;
+        }
     }
-    else
+    typename Image2DType::PixelType windowCenter = (minValue + maxValue) / 2;
+    typename Image2DType::PixelType windowWidth = (maxValue - minValue);
+
+    value.str("");
+    value << windowCenter;
+    itk::EncapsulateMetaData<std::string>(dictionary, "0028|1050", value.str() );
+    value.str("");
+    value << windowWidth;
+    itk::EncapsulateMetaData<std::string>(dictionary, "0028|1051", value.str() );
+
+    QDir dir(filePath);
+    if (!dir.exists())
     {
-        gdcmIO->SetKeepOriginalUID(true);
+        dir.mkpath(".");
     }
+    QString newFilename = filePath +"/"+ filename + "-" + QString::number(1000+slice) + path.right(4);
 
-    // To keep the new series in the same study as the original we need
-    // to keep the same study UID. But we need new series and frame of
-    // reference UID's.
-    gdcm::UIDGenerator suid;
-    std::string seriesUID = suid.Generate();
-    gdcm::UIDGenerator fuid;
-    std::string frameOfReferenceUID = fuid.Generate();
+    typename WriterType::Pointer writer = WriterType::New();
+    writer->SetFileName(newFilename.toStdString());
+    writer->SetInput(extract->GetOutput() );
+    writer->SetUseCompression(false);
+    try
+    {
+        writer->SetImageIO(gdcmIO);
+        writer->Update();
+    }
+    catch( itk::ExceptionObject & excp )
+    {
+        std::cerr << "Exception thrown while writing the file " << std::endl;
+        std::cerr << excp << std::endl;
+        return EXIT_FAILURE;
+    }
+    writer->Update();
+    return true;
+}
 
-    // Set the UID's for the study  and frame of reference
-    itk::EncapsulateMetaData<std::string>(dictionary,"0020|000e", seriesUID);
-    itk::EncapsulateMetaData<std::string>(dictionary,"0020|0052", frameOfReferenceUID);
+template <class PixelType> bool itkDicomDataImageWriter::writeDicom(const QString &path)
+{
+    //Trick to use QString with accent
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+    //Useful when writting Image position and orientiation matrix
+    setlocale(LC_NUMERIC, "C");
+    QLocale::setDefault(QLocale("C"));
+
+    typedef itk::GDCMImageIO ImageIOType;
+    typename ImageIOType::Pointer gdcmIO = ImageIOType::New();
+
+    itk::MetaDataDictionary dictionary;
+    bool studyUIDExistance = false;
+    int  numberOfSlices = 0;
+
+    fillDictionaryFromMetaDataKey(dictionary, studyUIDExistance);
+    fillDictionaryWithSharedData<PixelType>(dictionary, studyUIDExistance, gdcmIO, numberOfSlices);
 
     for( int slice = 0; slice < numberOfSlices; slice++ )
     {
-        gdcm::UIDGenerator sopuid;
-        std::string sopInstanceUID = sopuid.Generate();
-        itk::EncapsulateMetaData<std::string>(dictionary,"0008|0018", sopInstanceUID);
-        itk::EncapsulateMetaData<std::string>(dictionary,"0002|0003", sopInstanceUID);
-
-        // Instance Number
-        itk::EncapsulateMetaData<std::string>(dictionary, "0020|0013",std::to_string(slice + 1) );
-
-        typename Image3DType::PointType origin;
-        typename Image3DType::IndexType index;
-        index.Fill(0);
-        index[2] = slice;
-
-        // Image Position Patient
-        image->TransformIndexToPhysicalPoint(index, origin);
-
-        QString orientation =QString::number(origin[0]) + "\\" + QString::number(origin[1]) + "\\" + QString::number(origin[2]);
-        itk::EncapsulateMetaData<std::string>(dictionary, "0020|0032", orientation.toStdString() );
-
-        typename Image3DType::RegionType extractRegion;
-        typename Image3DType::SizeType   extractSize;
-        typename Image3DType::IndexType  extractIndex;
-        extractSize = image->GetLargestPossibleRegion().GetSize();
-        extractIndex.Fill(0);
-        extractIndex[2] = slice;
-        extractSize[2] = 0;
-        extractRegion.SetSize(extractSize);
-        extractRegion.SetIndex(extractIndex);
-
-        typedef itk::ExtractImageFilter<Image3DType, Image2DType> ExtractType;
-        typename ExtractType::Pointer extract = ExtractType::New();
-        extract->SetDirectionCollapseToGuess();
-        extract->SetInput(image);
-        extract->SetExtractionRegion(extractRegion);
-        extract->GetOutput()->SetMetaDataDictionary(dictionary);
-        extract->Update();
-
-        itk::ImageRegionIterator<Image2DType> it( extract->GetOutput(), extract->GetOutput()->GetLargestPossibleRegion() );
-        typename Image2DType::PixelType minValue = itk::NumericTraits<typename Image2DType::PixelType>::max();
-        typename Image2DType::PixelType maxValue = itk::NumericTraits<typename Image2DType::PixelType>::min();
-        for( it.GoToBegin(); !it.IsAtEnd(); ++it )
-        {
-            typename Image2DType::PixelType p = it.Get();
-            if( p > maxValue )
-            {
-                maxValue = p;
-            }
-            if( p < minValue )
-            {
-                minValue = p;
-            }
-        }
-        typename Image2DType::PixelType windowCenter = (minValue + maxValue) / 2;
-        typename Image2DType::PixelType windowWidth = (maxValue - minValue);
-
-        value.str("");
-        value << windowCenter;
-        itk::EncapsulateMetaData<std::string>(dictionary, "0028|1050", value.str() );
-        value.str("");
-        value << windowWidth;
-        itk::EncapsulateMetaData<std::string>(dictionary, "0028|1051", value.str() );
-
-        QDir dir(filePath);
-        if (!dir.exists())
-        {
-            dir.mkpath(".");
-        }
-        QString newFilename = filePath +"/"+ filename + "-" + QString::number(1000+slice) + path.right(4);
-
-        typename WriterType::Pointer writer = WriterType::New();
-        writer->SetFileName(newFilename.toStdString());
-        writer->SetInput(extract->GetOutput() );
-        writer->SetUseCompression(false);
-        try
-        {
-            writer->SetImageIO(gdcmIO);
-            writer->Update();
-        }
-        catch( itk::ExceptionObject & excp )
-        {
-            std::cerr << "Exception thrown while writing the file " << std::endl;
-            std::cerr << excp << std::endl;
-            return EXIT_FAILURE;
-        }
-        writer->Update();
+        if(!fillDictionaryAndWriteDicomSlice<PixelType>(dictionary, path, gdcmIO, slice))
+            return false;
     }
 
     return true;

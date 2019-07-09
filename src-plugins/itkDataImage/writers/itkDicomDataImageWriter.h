@@ -16,6 +16,8 @@
 #include <itkDataImageWriterBase.h>
 #include <itkDataImagePluginExport.h>
 
+#include <itkGDCMImageIO.h>
+
 class ITKDATAIMAGEPLUGIN_EXPORT itkDicomDataImageWriter: public itkDataImageWriterBase {
 public:
     itkDicomDataImageWriter();
@@ -31,10 +33,15 @@ public:
     static dtkAbstractDataWriter * create();
 
     QString sopClassUID(QString modality);
+    void fillDictionaryFromMetaDataKey(itk::MetaDataDictionary &dictionary, bool &studyUIDExistance);
 
 public slots:
     virtual bool write(const QString &path);
 
 protected:
     template <class PixelType> bool writeDicom(const QString &path);
+    template <class PixelType> void fillDictionaryWithSharedData(itk::MetaDataDictionary &dictionary, bool studyUIDExistance,
+                                                                 itk::GDCMImageIO::Pointer gdcmIO, int &numberOfSlices);
+    template <class PixelType> bool fillDictionaryAndWriteDicomSlice(itk::MetaDataDictionary &dictionary,  const QString &path,
+                                                                     itk::GDCMImageIO::Pointer gdcmIO, int slice);
 };
