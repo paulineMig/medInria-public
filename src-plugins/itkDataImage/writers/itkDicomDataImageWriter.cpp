@@ -308,7 +308,6 @@ template <class PixelType> void itkDicomDataImageWriter::fillDictionaryWithShare
         // Set the UID's for the study  and frame of reference
         itk::EncapsulateMetaData<std::string>(dictionary,"0020|000e", seriesUID);
         itk::EncapsulateMetaData<std::string>(dictionary,"0020|0052", frameOfReferenceUID);
-
 }
 
 template <class PixelType> bool itkDicomDataImageWriter::fillDictionaryAndWriteDicomSlice(itk::MetaDataDictionary &dictionary, const QString &path,
@@ -324,11 +323,9 @@ template <class PixelType> bool itkDicomDataImageWriter::fillDictionaryAndWriteD
     typedef itk::Image<PixelType,3> Image3DType;
     typedef itk::Image<PixelType,2> Image2DType;
     typedef itk::ImageFileWriter<Image2DType> WriterType;
-    //typedef itk::GDCMImageIO ImageIOType;
 
     itk::Object* itkImage = static_cast<itk::Object*>(data()->data());
     typename Image3DType::Pointer image = dynamic_cast<Image3DType*>(itkImage);
-    //typename ImageIOType::Pointer gdcmIO = ImageIOType::New();
 
     std::ostringstream value;
 
