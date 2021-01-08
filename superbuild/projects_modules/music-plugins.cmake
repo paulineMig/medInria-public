@@ -54,7 +54,6 @@ function(music_plugins_project)
             -DQWT_DIR:FILEPATH=${qwt_DIR}
             -DMMG_INCDIR:FILEPATH=${mmg_INCDIR}
             -DMMG_LIBDIR:FILEPATH=${mmg_LIBDIR}
-            -DMMG_SRC_DIR:FILEPATH=${mmg_SRC_DIR}
             -DTETGEN_INCLUDE_DIR:FILEPATH=${tetgen_INCLUDE_DIR}
             -DTETGEN_DIR:FILEPATH=${tetgen_DIR}
             -DQUAZIP_DIR:FILEPATH=${quazip_DIR}
