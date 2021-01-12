@@ -18,11 +18,11 @@ public:
     virtual ~medAbstractDataReader(void);
 
     int getNumberOfData() const;
-    const QVector<dtkSmartPointer<medAbstractData>>& getData() const;
+    QVector<medAbstractData*> getData() const;
 
 signals:
     void finishedReadingData(int dataNumber);
 
 protected:
-    QVector<dtkSmartPointer<medAbstractData>> m_data;
+    QVector<medAbstractData*> m_data;
 };

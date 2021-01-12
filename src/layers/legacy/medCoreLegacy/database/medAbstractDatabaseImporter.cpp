@@ -211,18 +211,21 @@ void medAbstractDatabaseImporter::importFile ( void )
         {
             // 2.1) Try reading file information, just the header not the whole file
             bool readOnlyImageInformation = true;
-            QVector<dtkSmartPointer<medAbstractData>> readData;
-            readData = tryReadImages ( QStringList ( fileInfo.filePath() ), readOnlyImageInformation );
+            auto readData = tryReadImages ( QStringList ( fileInfo.filePath() ), readOnlyImageInformation );
 
-            for (auto& medData : readData)
+            if (readData.isEmpty())
             {
-                if (medData.isNull())
+                if (!atLeastOneImportError)
                 {
-                    if (!atLeastOneImportError)
-                    {
-                        qWarning() << "Reader was unable to read at least: " << fileInfo.filePath();
-                        atLeastOneImportError = true;
-                    }
+                    qWarning() << "Reader was unable to read at least: " << fileInfo.filePath();
+                    atLeastOneImportError = true;
+                }
+            }
+
+            for (auto* medData : readData)
+            {
+                if (medData == nullptr)
+                {
                     continue;
                 }
 
@@ -293,6 +296,8 @@ void medAbstractDatabaseImporter::importFile ( void )
                 imagesGroupedByVolume[imageFileName] << fileInfo.filePath();
                 imagesGroupedByPatient[imageFileName] = patientID;
                 imagesGroupedBySeriesId[imageFileName] = currentSeriesId;
+
+                delete medData;
             }
         }
         else
@@ -355,12 +360,11 @@ void medAbstractDatabaseImporter::importFile ( void )
 
         for (int i = 0; i < data.size(); ++i)
         {
-//            emit progress (this, ((qreal)currentImageIndex / (qreal)imagesCount) * (100.0 - readInfoOffset) + readInfoOffset);
             currentImageIndex++;
 
-            auto medData = data[i];
+            dtkSmartPointer<medAbstractData> medData = data[i];
             QString aggregatedFileName = it.value()[i]; // note that this file might be aggregating more than one input files
-            if (!medData.isNull())
+            if (medData)
             {
                 // 3.3) a) re-populate missing metadata
                 // as files might be aggregated we use the aggregated file name as SeriesDescription (if not provided, of course)
@@ -807,11 +811,11 @@ QStringList medAbstractDatabaseImporter::getAllFilesToBeProcessed ( QString file
 * Only the header is read is specified by readOnlyImageInformation parameter.
 * @param filesPath - path/s of the file/s we want to read
 * @param readOnlyImageInformation - if true only image header is read, otherwise the full image
-* @return a @medAbstractData containing the read data
+* @return QVector of @medAbstractData containing the read data
 **/
-QVector<dtkSmartPointer<medAbstractData>> medAbstractDatabaseImporter::tryReadImages(const QStringList& filesPaths, bool readOnlyImageInformation)
+QVector<medAbstractData*> medAbstractDatabaseImporter::tryReadImages(const QStringList& filesPaths, bool readOnlyImageInformation)
 {
-    QVector<dtkSmartPointer<medAbstractData>> data;
+    QVector<medAbstractData*> data;
     medAbstractData *medData = nullptr;
 
     dtkSmartPointer<dtkAbstractDataReader> dataReader;

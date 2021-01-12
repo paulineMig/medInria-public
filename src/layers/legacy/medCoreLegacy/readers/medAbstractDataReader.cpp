@@ -22,7 +22,7 @@ int medAbstractDataReader::getNumberOfData() const
     return m_data.size();
 }
 
-const QVector<dtkSmartPointer<medAbstractData>>& medAbstractDataReader::getData() const
+QVector<medAbstractData*> medAbstractDataReader::getData() const
 {
     return m_data;
 }
