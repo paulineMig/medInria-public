@@ -18,7 +18,7 @@ public:
     virtual ~medAbstractDataReader(void);
 
     int getNumberOfData() const;
-    QVector<dtkSmartPointer<medAbstractData>> getData() const;
+    const QVector<dtkSmartPointer<medAbstractData>>& getData() const;
 
 signals:
     void finishedReadingData(int dataNumber);
