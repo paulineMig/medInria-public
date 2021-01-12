@@ -364,7 +364,7 @@ void medAbstractDatabaseImporter::importFile ( void )
 
             dtkSmartPointer<medAbstractData> medData = data[i];
             QString aggregatedFileName = it.value()[i]; // note that this file might be aggregating more than one input files
-            if (medData)
+            if (!medData.isNull())
             {
                 // 3.3) a) re-populate missing metadata
                 // as files might be aggregated we use the aggregated file name as SeriesDescription (if not provided, of course)
