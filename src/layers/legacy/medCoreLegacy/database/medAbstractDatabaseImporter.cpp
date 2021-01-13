@@ -271,7 +271,7 @@ void medAbstractDatabaseImporter::importFile ( void )
                 // i.e.: where we will write the imported image
                 QString imageFileName = determineFutureImageFileName ( medData, volumeUniqueIdToVolumeNumber[volumeId] );
 #ifdef Q_OS_WIN32
-                if ( (medStorage::dataLocation() + "/" + imageFileName).length() > 255 )
+                if ( (medStorage::dataLocation() + QDir::separator() + imageFileName).length() > 255 )
                 {
                     emit showError ( tr ( "Your database path is too long" ), 5000 );
                     emit dataImported(medDataIndex(), d->uuid);
@@ -411,7 +411,7 @@ void medAbstractDatabaseImporter::importFile ( void )
 
             // and finally we populate the database
             QFileInfo aggregatedFileNameFileInfo(aggregatedFileName);
-            QString pathToStoreThumbnails = aggregatedFileNameFileInfo.dir().path() + "/" + aggregatedFileNameFileInfo.completeBaseName() + "/";
+            QString pathToStoreThumbnails = aggregatedFileNameFileInfo.dir().path() + QDir::separator() + aggregatedFileNameFileInfo.completeBaseName() + QDir::separator();
             index = this->populateDatabaseAndGenerateThumbnails(medData, pathToStoreThumbnails);
 
             if(!d->uuid.isNull())
@@ -486,8 +486,8 @@ void medAbstractDatabaseImporter::importData()
 
     if ( !d->indexWithoutImporting )
     {
-        QString subDirName = "/" + patientId;
-        QString imageFileNameBase =  subDirName + "/" +  seriesId;
+        QString subDirName = QDir::separator() + patientId;
+        QString imageFileNameBase =  subDirName + QDir::separator() +  seriesId;
 
         QDir dir ( medStorage::dataLocation() + subDirName );
         if ( !dir.exists() )
@@ -520,7 +520,7 @@ void medAbstractDatabaseImporter::importData()
         }
 
          QFileInfo   seriesInfo ( imageFileName );
-         thumb_dir = seriesInfo.dir().path() + "/" + seriesInfo.completeBaseName() + "/";
+         thumb_dir = seriesInfo.dir().path() + QDir::separator() + seriesInfo.completeBaseName() + QDir::separator();
     }
 
     // Now, populate the database
