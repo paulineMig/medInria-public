@@ -327,8 +327,8 @@ void medAbstractDatabaseImporter::importFile ( void )
     // from now on the process cannot be cancelled
     emit disableCancel ( this );
 
-    // 3) First check is after the filtering we have something to import.
-    //    Maybe we had problems with all the files, or they were already in the database
+    // 3) First, check that there is something to import:
+    // maybe we had problems with all the files, or they were already in the database
     if (fileNamesToDataNames.isEmpty())
     {
         // TODO we know if it's either one or the other error, we can make this error better...
@@ -356,13 +356,13 @@ void medAbstractDatabaseImporter::importFile ( void )
 
         // 3.2) Try to read the whole image, not just the header
         bool readOnlyImageInformation = false;
-        auto data = tryReadImages (filesPaths, readOnlyImageInformation);
+        auto dataList = tryReadImages (filesPaths, readOnlyImageInformation);
 
-        for (int i = 0; i < data.size(); ++i)
+        for (int i = 0; i < dataList.size(); ++i)
         {
             currentImageIndex++;
 
-            dtkSmartPointer<medAbstractData> medData = data[i];
+            dtkSmartPointer<medAbstractData> medData = dataList[i];
             QString aggregatedFileName = it.value()[i]; // note that this file might be aggregating more than one input files
             if (!medData.isNull())
             {
