@@ -28,16 +28,17 @@ class itkFiltersComponentSizeThresholdProcessPrivate
 {
 public:
     double minimumSize;
+    double binarize;
 };
 
 const double itkFiltersComponentSizeThresholdProcess::defaultMinimumSize = 50.0;
-
 //-------------------------------------------------------------------------------------------
 
 itkFiltersComponentSizeThresholdProcess::itkFiltersComponentSizeThresholdProcess(itkFiltersComponentSizeThresholdProcess *parent) 
     : itkFiltersProcessBase(parent), d(new itkFiltersComponentSizeThresholdProcessPrivate)
 {  
     d->minimumSize = defaultMinimumSize;
+    double binarize = 0;
 }
 
 itkFiltersComponentSizeThresholdProcess::itkFiltersComponentSizeThresholdProcess(const itkFiltersComponentSizeThresholdProcess& other)
@@ -68,10 +69,21 @@ QString itkFiltersComponentSizeThresholdProcess::description() const
 
 void itkFiltersComponentSizeThresholdProcess::setParameter(int data, int channel)
 {
-    if (channel != 0)
-        return;
+    /*if (channel != 0)
+        return;*/
      
-    d->minimumSize = data;
+    if (channel == 0)
+    {
+       d->minimumSize = data;
+    }
+    else if (channel == 1)
+    {
+       d->binarize = data;	
+    }
+    else
+    {
+      return;
+    }
 }
 
 //-------------------------------------------------------------------------------------------
@@ -129,6 +141,17 @@ int itkFiltersComponentSizeThresholdProcess::updateProcess(medAbstractData* inpu
     relabelFilter->SetMinimumObjectSize(d->minimumSize);
     relabelFilter->Update();
 
+    itk::CStyleCommand::Pointer callback = itk::CStyleCommand::New();
+    callback->SetClientData ( ( void * ) this );
+    callback->SetCallback ( itkFiltersProcessBase::eventCallback );
+    connectedComponentFilter->AddObserver ( itk::ProgressEvent(), callback );
+
+    setOutputData(medAbstractDataFactory::instance()->createSmartPointer(medUtilitiesITK::itkDataImageId<OutputImageType>()));
+
+
+    std::cout << "d->binarize = " << d->binarize << std::endl;
+    if (d->binarize == 1.0)
+    { 
     // BINARY FILTER
     typedef itk::BinaryThresholdImageFilter <OutputImageType, OutputImageType> BinaryThresholdImageFilterType;
     typename BinaryThresholdImageFilterType::Pointer thresholdFilter
@@ -140,13 +163,13 @@ int itkFiltersComponentSizeThresholdProcess::updateProcess(medAbstractData* inpu
 
     thresholdFilter->Update();
 
-    itk::CStyleCommand::Pointer callback = itk::CStyleCommand::New();
-    callback->SetClientData ( ( void * ) this );
-    callback->SetCallback ( itkFiltersProcessBase::eventCallback );
-    connectedComponentFilter->AddObserver ( itk::ProgressEvent(), callback );
-
-    setOutputData(medAbstractDataFactory::instance()->createSmartPointer(medUtilitiesITK::itkDataImageId<OutputImageType>()));
     getOutputData()->setData ( thresholdFilter->GetOutput() );
+    }
+    else
+    {
+    getOutputData()->setData ( relabelFilter->GetOutput());
+    }
+    
 
     QString newSeriesDescription = "connectedComponent " + QString::number(d->minimumSize);
     medUtilities::setDerivedMetaData(getOutputData(), inputData, newSeriesDescription);
