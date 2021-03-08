@@ -44,6 +44,8 @@ public slots:
     
 protected slots:
     void displayOutput();
+    void onExportTransferMatrixCheckBoxToggled(bool toggle);
+    void editTransferMatrixPath(QString newPath);
 
 private:
     iterativeClosestPointToolBoxPrivate *d;
