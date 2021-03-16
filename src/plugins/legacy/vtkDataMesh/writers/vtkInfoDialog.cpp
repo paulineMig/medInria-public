@@ -147,6 +147,8 @@ vtkInfoDialog::vtkInfoDialog(vtkMetaDataSet *mesh, QWidget* parent)
     mainLayout->addLayout(buttonLayout);
     mainLayout->addStretch();
 
+    mainLayout->setSizeConstraint(QLayout::SetFixedSize);// !!! This is the what makes it auto-resize
+
     setLayout(mainLayout);
     setModal(true);
 }
