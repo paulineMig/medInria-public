@@ -54,7 +54,7 @@ class MEDVTKDATAMESHBASE_EXPORT vtkMetaVolumeMesh: public vtkMetaDataSet
 
   virtual void Read (const char* filename);
   
-  virtual void Write (const char* filename);
+  void Write (const char* filename, bool binary=false) override;
   
   vtkUnstructuredGrid* GetUnstructuredGrid() const;
   
@@ -77,7 +77,7 @@ protected:
   virtual void ReadVtkFile(const char* filename);
   virtual void ReadMeshFile(const char* filename);
   virtual void ReadGMeshFile(const char* filename);
-  virtual void WriteVtkFile (const char* filename);
+  virtual void WriteVtkFile (const char* filename, bool binary=false);
 
 private:
   void operator=(const vtkMetaVolumeMesh&);        // Not implemented.

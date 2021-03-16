@@ -138,7 +138,7 @@ void vtkMetaVolumeMesh::Read (const char* filename)
 }
 
 //----------------------------------------------------------------------------
-void vtkMetaVolumeMesh::WriteVtkFile (const char* filename)
+void vtkMetaVolumeMesh::WriteVtkFile (const char* filename, bool binary)
 {
     if (!this->DataSet)
     {
@@ -157,6 +157,10 @@ void vtkMetaVolumeMesh::WriteVtkFile (const char* filename)
     try
     {
         writer->SetInputData (c_mesh);
+        if(binary)
+        {
+            writer->SetFileTypeToBinary();
+        }
         writer->Write();
         writer->Delete();
     }
@@ -170,7 +174,7 @@ void vtkMetaVolumeMesh::WriteVtkFile (const char* filename)
 }
 
 //----------------------------------------------------------------------------
-void vtkMetaVolumeMesh::Write (const char* filename)
+void vtkMetaVolumeMesh::Write (const char* filename, bool binary)
 {
     try
     {

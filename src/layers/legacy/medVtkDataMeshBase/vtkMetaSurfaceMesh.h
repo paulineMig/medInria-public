@@ -63,7 +63,7 @@ class MEDVTKDATAMESHBASE_EXPORT vtkMetaSurfaceMesh: public vtkMetaDataSet
       can only read and write vtkPolyData format files
   */
   virtual void Read (const char* filename);  
-  virtual void Write (const char* filename);
+  void Write (const char* filename, bool binary=false) override;
 
   /**
      Get method to get the vtkDataSet as a vtkPolyData
@@ -99,7 +99,7 @@ protected:
   virtual void ReadMeshFile(const char* filename);
   virtual void ReadOBJFile(const char* filename);
   virtual void WriteOBJFile(const char* filename);
-  virtual void WriteVtkFile (const char* filename);
+  virtual void WriteVtkFile (const char* filename, bool binary=false);
   virtual void WriteVtpFile (const char* filename);
 
   /**

@@ -203,7 +203,7 @@ void vtkMetaSurfaceMesh::Read (const char* filename)
 
 
 //----------------------------------------------------------------------------
-void vtkMetaSurfaceMesh::WriteVtkFile (const char* filename)
+void vtkMetaSurfaceMesh::WriteVtkFile (const char* filename, bool binary)
 {
   if (!this->DataSet)
   {
@@ -224,6 +224,10 @@ void vtkMetaSurfaceMesh::WriteVtkFile (const char* filename)
   try
   {
     writer->SetInputData (c_mesh);
+    if(binary)
+    {
+        writer->SetFileTypeToBinary();
+    }
     writer->Write();
     writer->Delete();
   }
@@ -277,7 +281,7 @@ void vtkMetaSurfaceMesh::WriteOBJFile (const char* filename)
 
 
 //----------------------------------------------------------------------------
-void vtkMetaSurfaceMesh::Write (const char* filename)
+void vtkMetaSurfaceMesh::Write (const char* filename, bool binary)
 {
     try
     {
@@ -288,7 +292,7 @@ void vtkMetaSurfaceMesh::Write (const char* filename)
         }
         else
         {
-            this->WriteVtkFile (filename);
+            this->WriteVtkFile (filename, binary);
         }
     }
     catch (vtkErrorCode::ErrorIds error)

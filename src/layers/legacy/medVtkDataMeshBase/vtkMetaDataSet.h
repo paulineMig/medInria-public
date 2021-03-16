@@ -230,7 +230,7 @@ class MEDVTKDATAMESHBASE_EXPORT vtkMetaDataSet: public vtkDataObject
      Overridden methods for read and write the dataset
   */
   virtual void Read  (const char* filename);
-  virtual void Write (const char* filename);
+  virtual void Write (const char* filename, bool binary=false);
   /**
      read and assign some scalars to the dataset (should be point set).
      Either vtkMetaSurfaceMesh or vtkMetaVolumeMesh. The scalars are casted in float type

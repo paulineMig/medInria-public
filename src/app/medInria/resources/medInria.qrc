@@ -165,7 +165,6 @@
         <file>icons/saveScene.png</file>
         <file>icons/saveScene_grey.png</file>
         <file>icons/scene.png</file>
-
         <file>../../../../LICENSE_MUSICardio.txt</file>
         <file>MUSICardio_logo_light-notext.png</file>
         <file>MUSICardio_logo_light.png</file>
@@ -212,5 +211,7 @@
         <file>icons/adjust_size_grey_blue.png</file>
         <file>pixmaps/radio_blue.png</file>
         <file>music_darkGrey.qss</file>
+        <file>icons/dataTypeCell.png</file>
+        <file>icons/dataTypePoint.png</file>
     </qresource>
 </RCC>
