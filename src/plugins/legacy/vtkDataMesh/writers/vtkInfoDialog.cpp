@@ -27,7 +27,7 @@ public:
     QMap<int, QPair<QString, bool> > mapOfArrayToKeep;
 
     // maps multiple actions on one slot
-    QSignalMapper* visibilityMapper;
+    QSignalMapper* checkedMapper;
 
     vtkMetaDataSet * mesh;
 
@@ -66,7 +66,7 @@ void vtkInfoDialogPrivate::initializeArraysMap()
 // ////////////////////////////////////////////////////////////////////////////
 // //////////////////////// vtkInfoDialog ///////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////////
-vtkInfoDialog::vtkInfoDialog(vtkMetaDataSet *mesh, QWidget* parent)
+vtkInfoDialog::vtkInfoDialog(vtkMetaDataSet *mesh, bool binaryFormat, QWidget* parent)
     : QDialog(parent, Qt::Dialog | Qt::WindowCloseButtonHint),
       d(new vtkInfoDialogPrivate())
 {
@@ -76,10 +76,18 @@ vtkInfoDialog::vtkInfoDialog(vtkMetaDataSet *mesh, QWidget* parent)
     /** ------------- initialize UI --------------------- **/
     QVBoxLayout* mainLayout = new QVBoxLayout();
 
-    d->visibilityMapper = new QSignalMapper(this);
+    d->checkedMapper = new QSignalMapper(this);
 
     d->binaryCheckBox = new QCheckBox(tr("Binary Format"));
-    d->binaryCheckBox->setChecked(false);
+    if(binaryFormat)
+    {
+        d->binaryCheckBox->setChecked(true);
+        d->binaryCheckBox->setEnabled(false);
+    }
+    else
+    {
+        d->binaryCheckBox->setChecked(false);
+    }
 
     d->arraysWidget = new QWidget(this);
     d->arraysCheckBox = new QCheckBox(tr("Choose arrays to keep"));
@@ -96,7 +104,7 @@ vtkInfoDialog::vtkInfoDialog(vtkMetaDataSet *mesh, QWidget* parent)
     QVBoxLayout* arrayLayout = new QVBoxLayout();
     d->arraysWidget->setLayout(arrayLayout);
 
-    d->visibilityMapper->disconnect();
+    d->checkedMapper->disconnect();
     QIcon cellIcon(":/icons/dataTypeCell.png");
     QIcon pointIcon(":/icons/dataTypePoint.png");
 
@@ -112,16 +120,15 @@ vtkInfoDialog::vtkInfoDialog(vtkMetaDataSet *mesh, QWidget* parent)
         {
             checkBox->setIcon(cellIcon);
         }
-        checkBox->show();
         arrayLayout->addWidget(checkBox);
 
         connect(checkBox, SIGNAL(clicked(bool)),
-                d->visibilityMapper, SLOT(map()));
-        d->visibilityMapper->setMapping(checkBox, i);
+                d->checkedMapper, SLOT(map()));
+        d->checkedMapper->setMapping(checkBox, i);
 
     }
     // connect the signal mapper to the correct slot
-    connect(d->visibilityMapper, SIGNAL(mapped(int)),
+    connect(d->checkedMapper, SIGNAL(mapped(int)),
             this, SLOT(getArrayId(int)));
 
     d->arraysWidget->hide();
@@ -155,7 +162,7 @@ vtkInfoDialog::vtkInfoDialog(vtkMetaDataSet *mesh, QWidget* parent)
 
 vtkInfoDialog::~vtkInfoDialog()
 { 
-    delete d->visibilityMapper;
+    delete d->checkedMapper;
     //d->mesh = nullptr;
 
     delete d;

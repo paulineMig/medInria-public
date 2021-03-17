@@ -18,26 +18,50 @@
 #include <medAbstractDataFactory.h>
 
 #include <vtkPointData.h>
+#include <vtksys/SystemTools.hxx>
 
 const char vtkDataMeshWriter::ID[] = "vtkDataMeshWriter";
 
 class vtkDataMeshWriterPrivate
 {
 public:
-     bool binary;
-     bool dialogSuccess;
+    bool isVtpExtension(const char* ext);
+    bool isVtuExtension(const char* ext);
 
-     vtkMetaDataSet * meshbis;
+    bool binary;
+    bool binaryFomatType;
+    bool dialogSuccess;
+
+    vtkMetaDataSet * mesh;
 
 };
 
+bool vtkDataMeshWriterPrivate::isVtpExtension(const char* ext)
+{
+    if (strcmp (ext, ".vtp") == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
+bool vtkDataMeshWriterPrivate::isVtuExtension(const char* ext)
+{
+    if (strcmp (ext, ".vtu") == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
 vtkDataMeshWriter::vtkDataMeshWriter()
     : vtkDataMeshWriterBase(),
-    d(new vtkDataMeshWriterPrivate())
+      d(new vtkDataMeshWriterPrivate())
 {
     d->binary = false;
+    d->binaryFomatType = false;
     d->dialogSuccess = false;
-    d->meshbis = nullptr;
+    d->mesh = nullptr;
 }
 
 vtkDataMeshWriter::~vtkDataMeshWriter()
@@ -65,27 +89,30 @@ bool vtkDataMeshWriter::write(const QString& path)
     qDebug().noquote() << "Can write with: " << this->identifier();
 
     medAbstractData * medData = dynamic_cast<medAbstractData*>(this->data());
-   // medAbstractData * medDataCopy = medData->clone();
 
     if(medData->identifier() != "vtkDataMesh")
     {
         return false;
     }
 
-    d->meshbis = dynamic_cast< vtkMetaDataSet*>( (vtkObject*)(this->data()->data()));
-    //vtkMetaDataSet* meshTemp = d->meshbis->Clone();
+    d->mesh = dynamic_cast< vtkMetaDataSet*>( (vtkObject*)(this->data()->data()));
 
-    if (!d->meshbis)
+    if (!d->mesh)
     {
-         qDebug() << "---------------------DataMeshWriter: mesh test = nullptr----------------------";
         return false;
     }
-    addMetaDataAsFieldData(d->meshbis);
+    addMetaDataAsFieldData(d->mesh);
 
     try
     {
         setlocale(LC_NUMERIC, "C");
         QLocale::setDefault(QLocale("C"));
+
+        if(d->isVtpExtension(vtksys::SystemTools::GetFilenameLastExtension(path.toLocal8Bit().constData()).c_str())
+                ||d->isVtuExtension(vtksys::SystemTools::GetFilenameLastExtension(path.toLocal8Bit().constData()).c_str()))
+        {
+            d->binaryFomatType = true;
+        }
 
         this->moveToThread(qApp->thread());
         connect(this, SIGNAL(needMoreParameters()),
@@ -96,39 +123,14 @@ bool vtkDataMeshWriter::write(const QString& path)
         // reached only when slot showInfoDialog has returned
         if (d->dialogSuccess)
         {
-            if(d->binary)
-            {
-                qDebug() << "---------------------DataMeshWriter: binaire----------------------";
-            }
-
-            d->meshbis->Write(path.toLocal8Bit().constData(), d->binary);
-            clearMetaDataFieldData(d->meshbis);
-        }
-        else
-        {
-            qDebug() << "---------------------Dialog false ----------------------";
-            if(!d->meshbis)
-            {
-                qDebug() << "---------------------Bad bad bad----------------------";
-                return false;
-            }
-            if(!d->meshbis->GetDataSet())
-            {
-                qDebug() << "---------------------Bad really really bad bad----------------------";
-                return false;
-            }
-            qDebug() << "---------------------Not so bad ----------------------";
-
-           // d->meshbis->SetDataSet(mesh->GetDataSet());
-            //d->meshbis = meshTemp->Clone();
-
-            qDebug() << "Nb arrays" << d->meshbis->GetDataSet()->GetPointData()->GetNumberOfArrays();
+            d->mesh->Write(path.toLocal8Bit().constData(), d->binary);
+            clearMetaDataFieldData(d->mesh);
         }
     }
     catch (...)
     {
         qDebug() << metaObject()->className() << ": error writing to " << path;
-        clearMetaDataFieldData(d->meshbis);
+        clearMetaDataFieldData(d->mesh);
         return false;
     }
 
@@ -139,17 +141,17 @@ void vtkDataMeshWriter::showInfoDialog()
 {
     // Open a dialog: users must choose what cell and point data
     // to save.
-    vtkMetaDataSet * meshTemp = d->meshbis->Clone();
+    vtkMetaDataSet * meshTemp = d->mesh->Clone();
     vtkMetaDataSet * meshTemp2 = meshTemp->Clone();
-    vtkInfoDialog editDialog(meshTemp, nullptr);
+    vtkInfoDialog editDialog(meshTemp, d->binaryFomatType, nullptr);
 
     d->dialogSuccess = false;
     if (editDialog.exec() == QDialog::Accepted)
     {
         d->binary = editDialog.fileFormatType();
-        d->meshbis = editDialog.getMetaDataSet();
+        d->mesh = editDialog.getMetaDataSet();
 
-        if (!d->meshbis)
+        if (!d->mesh)
         {
             return;
         }
@@ -158,7 +160,7 @@ void vtkDataMeshWriter::showInfoDialog()
     }
     else
     {
-       d->meshbis = meshTemp2->Clone();
+        d->mesh = meshTemp2->Clone();
     }
 }
 
@@ -174,12 +176,12 @@ QString vtkDataMeshWriter::identifier() const
 
 QStringList vtkDataMeshWriter::supportedFileExtensions() const
 {
-    return QStringList() << ".vtk" << ".vtp";
+    return QStringList() << ".vtk" << ".vtp" << ".vtu";
 }
 
 bool vtkDataMeshWriter::registered()
 {
-  return medAbstractDataFactory::instance()->registerDataWriterType("vtkDataMeshWriter", vtkDataMeshWriter::s_handled(), createVtkDataMeshWriter);
+    return medAbstractDataFactory::instance()->registerDataWriterType("vtkDataMeshWriter", vtkDataMeshWriter::s_handled(), createVtkDataMeshWriter);
 }
 
 // /////////////////////////////////////////////////////////////////
@@ -188,7 +190,7 @@ bool vtkDataMeshWriter::registered()
 
 dtkAbstractDataWriter *createVtkDataMeshWriter()
 {
-  return new vtkDataMeshWriter;
+    return new vtkDataMeshWriter;
 }
 
 

@@ -15,7 +15,7 @@ class VTKDATAMESHPLUGIN_EXPORT vtkInfoDialog: public QDialog
 
 public:
 
-    vtkInfoDialog(vtkMetaDataSet *mesh, QWidget *parent);
+    vtkInfoDialog(vtkMetaDataSet *mesh, bool binaryFormat, QWidget *parent);
 
     virtual ~vtkInfoDialog();
 
