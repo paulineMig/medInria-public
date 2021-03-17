@@ -203,7 +203,7 @@ void vtkMetaSurfaceMesh::Read (const char* filename)
 
 
 //----------------------------------------------------------------------------
-void vtkMetaSurfaceMesh::WriteVtkFile (const char* filename)
+void vtkMetaSurfaceMesh::WriteVtkFile (const char* filename, bool binary)
 {
   if (!this->DataSet)
   {
@@ -224,6 +224,10 @@ void vtkMetaSurfaceMesh::WriteVtkFile (const char* filename)
   try
   {
     writer->SetInputData (c_mesh);
+    if(binary)
+    {
+        writer->SetFileTypeToBinary();
+    }
     writer->Write();
     writer->Delete();
   }
@@ -277,18 +281,23 @@ void vtkMetaSurfaceMesh::WriteOBJFile (const char* filename)
 
 
 //----------------------------------------------------------------------------
-void vtkMetaSurfaceMesh::Write (const char* filename)
+void vtkMetaSurfaceMesh::Write (const char* filename, bool binary)
 {
     try
     {
-        qDebug()<<"Writing: "<<filename;
         if (vtkMetaSurfaceMesh::IsVtpExtension(vtksys::SystemTools::GetFilenameLastExtension(filename).c_str()))
         {
+            qDebug()<<"Writing: "<<filename;
             this->WriteVtpFile (filename);
+        }
+        else if (vtkMetaSurfaceMesh::IsVtkExtension(vtksys::SystemTools::GetFilenameLastExtension(filename).c_str()))
+        {
+            qDebug()<<"Writing: "<<filename;
+            this->WriteVtkFile (filename, binary);
         }
         else
         {
-            this->WriteVtkFile (filename);
+           qDebug()<<"Can not write: " << filename << " vtu extension is for unstructured grid mesh only";
         }
     }
     catch (vtkErrorCode::ErrorIds error)
@@ -302,7 +311,13 @@ bool vtkMetaSurfaceMesh::IsVtpExtension (const char* ext)
 {
     if (strcmp (ext, ".vtp") == 0)
         return true;
-    
+    return false;
+}
+
+bool vtkMetaSurfaceMesh::IsVtuExtension (const char* ext)
+{
+    if (strcmp (ext, ".vtu") == 0)
+        return true;
     return false;
 }
 

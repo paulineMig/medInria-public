@@ -62,8 +62,8 @@ class MEDVTKDATAMESHBASE_EXPORT vtkMetaSurfaceMesh: public vtkMetaDataSet
      Overwridden methods for read and write surface meshes
       can only read and write vtkPolyData format files
   */
-  virtual void Read (const char* filename);  
-  virtual void Write (const char* filename);
+  virtual void Read (const char* filename) override;
+  void Write (const char* filename, bool binary=false) override;
 
   /**
      Get method to get the vtkDataSet as a vtkPolyData
@@ -75,37 +75,39 @@ class MEDVTKDATAMESHBASE_EXPORT vtkMetaSurfaceMesh: public vtkMetaDataSet
   */
   static bool         IsVtkExtension (const char* ext);
   static bool         IsVtpExtension (const char* ext);
+  static bool         IsVtuExtension (const char* ext);
   static bool         IsMeshExtension (const char* ext);
   static bool         IsOBJExtension (const char* ext);
   static unsigned int CanReadFile (const char* filename);
 
+
   /**
      Get the type of the metadataset as string
   */
-  virtual const char* GetDataSetType() const
+  virtual const char* GetDataSetType() const override
   {
     return "SurfaceMesh";
   }
 
-  virtual void CreateWirePolyData();
+  virtual void CreateWirePolyData() override;
 
 protected:
   vtkMetaSurfaceMesh();
   vtkMetaSurfaceMesh(const vtkMetaSurfaceMesh&);
-  ~vtkMetaSurfaceMesh();
+  ~vtkMetaSurfaceMesh() override;
 
   virtual void ReadVtkFile(const char* filename);
   virtual void ReadVtpFile(const char* filename);
   virtual void ReadMeshFile(const char* filename);
   virtual void ReadOBJFile(const char* filename);
   virtual void WriteOBJFile(const char* filename);
-  virtual void WriteVtkFile (const char* filename);
+  virtual void WriteVtkFile (const char* filename, bool binary=false);
   virtual void WriteVtpFile (const char* filename);
 
   /**
      Method called everytime the dataset changes for initialization
   */
-  virtual void Initialize();
+  virtual void Initialize() override;
   
 private:
   void operator=(const vtkMetaSurfaceMesh&);        // Not implemented.

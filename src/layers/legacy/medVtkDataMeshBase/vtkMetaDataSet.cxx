@@ -642,9 +642,10 @@ void vtkMetaDataSet::Read (const char* filename)
 }
 
 //----------------------------------------------------------------------------
-void vtkMetaDataSet::Write (const char* filename)
+void vtkMetaDataSet::Write (const char* filename, bool binary)
 {
     Q_UNUSED(filename);
+    Q_UNUSED(binary);
     vtkErrorMacro("not implemented here");
     throw vtkErrorCode::UserError;
 }
