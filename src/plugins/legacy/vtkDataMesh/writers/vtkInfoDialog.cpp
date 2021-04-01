@@ -21,7 +21,6 @@ public:
 
     QCheckBox* arraysCheckBox;
     QCheckBox* binaryCheckBox;
-    QMenu* managerMenu;
     QWidget* arraysWidget;
 
     QMap<int, QPair<QString, bool> > mapOfArrayToKeep;
@@ -29,7 +28,7 @@ public:
     // maps multiple actions on one slot
     QSignalMapper* checkedMapper;
 
-    vtkMetaDataSet * mesh;
+    vtkSmartPointer<vtkMetaDataSet> mesh;
 
     int nbCellArray;
     int nbPointArray;
@@ -66,7 +65,7 @@ void vtkInfoDialogPrivate::initializeArraysMap()
 // ////////////////////////////////////////////////////////////////////////////
 // //////////////////////// vtkInfoDialog ///////////////////////////////////
 // ////////////////////////////////////////////////////////////////////////////
-vtkInfoDialog::vtkInfoDialog(vtkMetaDataSet *mesh, bool binaryFormat, QWidget* parent)
+vtkInfoDialog::vtkInfoDialog(vtkSmartPointer<vtkMetaDataSet> mesh, bool binaryFormat, QWidget* parent)
     : QDialog(parent, Qt::Dialog | Qt::WindowCloseButtonHint),
       d(new vtkInfoDialogPrivate())
 {

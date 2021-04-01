@@ -31,7 +31,9 @@ public:
     dtkSmartPointer<medAbstractData> data;
     static QMutex mutex;
     bool isCancelled;
+    bool canWriterBeCancelled;
     bool indexWithoutImporting;
+    bool binary;
     medDataIndex index;
 
     QMap<int, QString> volumeIdToImageFile;
@@ -52,6 +54,7 @@ medAbstractDatabaseImporter::medAbstractDatabaseImporter ( const QString& file, 
     d->file = file;
     d->data = nullptr;
     d->indexWithoutImporting = indexWithoutImporting;
+    d->binary = false;
     d->uuid = uuid;
 }
 
@@ -59,11 +62,31 @@ medAbstractDatabaseImporter::medAbstractDatabaseImporter ( const QString& file, 
 
 medAbstractDatabaseImporter::medAbstractDatabaseImporter ( medAbstractData* medData, const QUuid& uuid, bool indexWithoutImporting) : medJobItemL(), d ( new medAbstractDatabaseImporterPrivate )
 {
+    qDebug() << "Bad importer";
     d->isCancelled = false;
     d->data = medData;
     d->file = QString("");
     d->indexWithoutImporting = indexWithoutImporting;
+    d->binary = false;
     d->uuid = uuid;
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
+medAbstractDatabaseImporter::medAbstractDatabaseImporter ( medAbstractData* medData, const QUuid& uuid, bool indexWithoutImporting, bool binary) : medJobItemL(), d ( new medAbstractDatabaseImporterPrivate )
+{
+    qDebug() << "Good importer";
+    d->isCancelled = false;
+    d->data = medData;
+    d->file = QString("");
+    d->indexWithoutImporting = indexWithoutImporting;
+    d->binary = binary;
+    d->uuid = uuid;
+
+    if( binary)
+    {
+        qDebug() << "binary = true";
+    }
 }
 
 //-----------------------------------------------------------------------------------------------------------
@@ -509,8 +532,12 @@ void medAbstractDatabaseImporter::importData()
 
         if ( !writeSuccess  )
         {
+            if(d->canWriterBeCancelled)
+            {
+                qDebug() << "Writing process was canceled.";
+                return;
+            }
             // when creating empty patients or studies, we need to continue to populate the database
-
             qWarning() << "Unable to write image " + imageFileName;
             qWarning() << "Either there is nothing to write or a problem occured when writing.";
         }
@@ -761,14 +788,28 @@ dtkSmartPointer<dtkAbstractDataWriter> medAbstractDatabaseImporter::getSuitableW
         return nullptr;
 
     QList<QString> writers = medAbstractDataFactory::instance()->writers();
+    qDebug() << "List writers:" << writers;
+    d->canWriterBeCancelled = false;
+    if (d->binary)
+    {
+        // set vtkConfigurableMeshWriter as a top priority writer
+        if(writers.contains("vtkConfigurableMeshWriter"))
+        {
+            writers.move(writers.indexOf("vtkConfigurableMeshWriter"), 0);
+        }
+    }
+
     dtkSmartPointer<dtkAbstractDataWriter> dataWriter;
     for ( int i=0; i<writers.size(); i++ )
     {
+       qDebug() <<" ---------------writer: "<< writers[i] ;
         dataWriter = medAbstractDataFactory::instance()->writerSmartPointer ( writers[i] );
         dataWriter->setData(medData);
 
         if (dataWriter->handled().contains(medData->identifier()) &&
              dataWriter->canWrite( filename ) ) {
+            qDebug() <<" ---------------writer really used: "<< writers[i] ;
+            d->canWriterBeCancelled = true;
             dataWriter->enableDeferredDeletion(false);
             return dataWriter;
         }

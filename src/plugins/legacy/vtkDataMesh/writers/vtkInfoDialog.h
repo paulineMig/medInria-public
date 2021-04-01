@@ -5,6 +5,8 @@
 #include <medDataIndex.h>
 #include <vtkMetaDataSet.h>
 
+#include <vtkSmartPointer.h>
+
 #include <QDialog>
 
 class vtkInfoDialogPrivate;
@@ -15,7 +17,7 @@ class VTKDATAMESHPLUGIN_EXPORT vtkInfoDialog: public QDialog
 
 public:
 
-    vtkInfoDialog(vtkMetaDataSet *mesh, bool binaryFormat, QWidget *parent);
+    vtkInfoDialog(vtkSmartPointer<vtkMetaDataSet> mesh, bool binaryFormat, QWidget *parent);
 
     virtual ~vtkInfoDialog();
 

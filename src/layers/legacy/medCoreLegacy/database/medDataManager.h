@@ -37,14 +37,14 @@ public:
 
     QHash<QString, dtkAbstractDataWriter*> getPossibleWriters(medAbstractData* data);
 
-    QUuid importData(medAbstractData* data, bool persistent = false);
+    QUuid importData(medAbstractData* data, bool persistent = false, bool binary = false);
     QUuid importPath(const QString& dataPath, bool indexWithoutCopying, bool persistent = false);
 
     void exportData(medAbstractData* data);
     void exportDataToPath(medAbstractData* data, const QString& path, const QString& format = "");
     void exportDataToPath(QList<medAbstractData *> dataList, const QString& path, const QString& format = "");
 
-    QUuid makePersistent(medAbstractData* data);
+    QUuid makePersistent(medAbstractData* data, bool binary = false);
 
     QString getMetaData(const medDataIndex& index, const QString& key);
     bool setMetadata(const medDataIndex& index, const QString& key, const QString& value);

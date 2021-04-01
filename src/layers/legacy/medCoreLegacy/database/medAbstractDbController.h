@@ -50,7 +50,7 @@ signals:
 public slots:
     virtual medAbstractData* retrieve(const medDataIndex& index) const = 0;
 
-    virtual void importData(medAbstractData* data, const QUuid& importUuid) = 0;
+    virtual void importData(medAbstractData* data, const QUuid& importUuid, bool binary = false) = 0;
     virtual void importPath(const QString& file, const QUuid& importUuid, bool indexWithoutCopying) = 0;
 
     virtual void remove(const medDataIndex& index) = 0;

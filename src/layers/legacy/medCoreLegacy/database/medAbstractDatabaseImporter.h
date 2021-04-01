@@ -42,7 +42,8 @@ class MEDCORELEGACY_EXPORT medAbstractDatabaseImporter : public medJobItemL
 
 public:
     medAbstractDatabaseImporter (const QString& file, const QUuid &uuid, bool indexWithoutImporting = false);
-    medAbstractDatabaseImporter ( medAbstractData* medData, const QUuid& uuid, bool indexWithoutImporting = false);
+    medAbstractDatabaseImporter (medAbstractData* medData, const QUuid& uuid, bool indexWithoutImporting = false);
+    medAbstractDatabaseImporter ( medAbstractData* medData, const QUuid& uuid, bool indexWithoutImporting = false, bool binary= false);
 
     ~medAbstractDatabaseImporter() override;
 
@@ -80,7 +81,7 @@ protected:
     void addAdditionalMetaData ( medAbstractData* imData, QString aggregatedFileName, QStringList aggregatedFilesPaths );
 
     dtkSmartPointer<dtkAbstractDataReader> getSuitableReader ( QStringList filename );
-    dtkSmartPointer<dtkAbstractDataWriter> getSuitableWriter ( QString filename, medAbstractData* medData );
+    dtkSmartPointer<dtkAbstractDataWriter> getSuitableWriter (QString filename, medAbstractData* medData );
 
     QStringList getAllFilesToBeProcessed ( QString fileOrDirectory );
 

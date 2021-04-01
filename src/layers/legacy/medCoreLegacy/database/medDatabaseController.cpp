@@ -360,9 +360,9 @@ void medDatabaseController::importPath(const QString& file, const QUuid &importU
 * Import data into the db read from memory
 * @param medAbstractData * data dataObject
 */
-void medDatabaseController::importData( medAbstractData *data, const QUuid & importUuid)
+void medDatabaseController::importData( medAbstractData *data, const QUuid & importUuid, bool binary)
 {
-    medDatabaseImporter *importer = new medDatabaseImporter(data, importUuid);
+    medDatabaseImporter *importer = new medDatabaseImporter(data, importUuid, binary);
     medMessageProgress *message = medMessageController::instance()->showProgress("Saving database item");
 
     connect(importer, SIGNAL(progressed(int)),    message, SLOT(setProgress(int)));

@@ -22,6 +22,7 @@
 #include <vtkDataMesh4DReader.h>
 
 #include <vtkDataMeshWriter.h>
+#include <vtkConfigurableMeshWriter.h>
 #include <vtkDataMesh4DWriter.h>
 
 #include <dtkLog/dtkLog.h>
@@ -74,6 +75,7 @@ bool vtkDataMeshPlugin::initialize()
   if ( ! vtkDataMesh4DReader::registered()) { qWarning() << "Unable to register vtkDataMesh4DReader type"; }
   
   if ( ! vtkDataMeshWriter::registered())   { qWarning() << "Unable to register vtkDataMeshWriter type"; }
+  if ( ! vtkConfigurableMeshWriter::registered())   { qWarning() << "Unable to register vtkConfigurableMeshWriter type"; }
   if ( ! vtkDataMesh4DWriter::registered()) { qWarning() << "Unable to register vtkDataMesh4DWriter type"; }
   
   return true;
@@ -109,6 +111,6 @@ QStringList vtkDataMeshPlugin::types() const
   return QStringList() << "vtkDataMesh"
                        << "vtkDataMeshWriter"
                        << "vtkDataMesh4DWriter"
-                       << "vtkDataMeshWriter"
-                       << "vtkDataMesh4DWriter";
+                       << "vtkDataMeshReader"
+                       << "vtkDataMesh4DReader";
 }

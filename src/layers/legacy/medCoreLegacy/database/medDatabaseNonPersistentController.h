@@ -62,7 +62,7 @@ public:
 public slots:
     virtual medAbstractData* retrieve(const medDataIndex& index) const;
 
-    void importData(medAbstractData *data, const QUuid & callerUuid);
+    void importData(medAbstractData *data, const QUuid & callerUuid, bool binary = false);
     void importPath(const QString& file, const QUuid & callerUuid, bool indexWithoutCopying);
 
     void remove(const medDataIndex& index);

@@ -32,8 +32,8 @@ medDatabaseImporter::medDatabaseImporter ( const QString& file, const QUuid& uui
 
 //-----------------------------------------------------------------------------------------------------------
 
-medDatabaseImporter::medDatabaseImporter ( medAbstractData* medData, const QUuid& uuid ) :
-    medAbstractDatabaseImporter(medData, uuid)
+medDatabaseImporter::medDatabaseImporter (medAbstractData* medData, const QUuid& uuid , bool binary) :
+    medAbstractDatabaseImporter(medData, uuid, false, binary)
 {
 
 }

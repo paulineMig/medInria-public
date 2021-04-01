@@ -16,14 +16,15 @@ PURPOSE.
 #include "vtkDataMeshWriterBase.h"
 
 class vtkDataSetWriter;
+class vtkConfigurableMeshWriterPrivate;
 
-class VTKDATAMESHPLUGIN_EXPORT vtkDataMeshWriter : public vtkDataMeshWriterBase
+class VTKDATAMESHPLUGIN_EXPORT vtkConfigurableMeshWriter : public vtkDataMeshWriterBase
 {
     Q_OBJECT
 
 public:
-    vtkDataMeshWriter();
-    ~vtkDataMeshWriter() override = default;
+    vtkConfigurableMeshWriter();
+    ~vtkConfigurableMeshWriter() override;
 
     QStringList handled() const override;
     static  QStringList s_handled();
@@ -37,9 +38,14 @@ public:
 
 public slots:
     bool write (const QString& path) override;
+    void showInfoDialog();
+
+signals:
+    void needMoreParameters();
 
 private:
     static const char ID[];
+    vtkConfigurableMeshWriterPrivate* d;
 };
 
-dtkAbstractDataWriter *createVtkDataMeshWriter();
+dtkAbstractDataWriter *createvtkConfigurableMeshWriter();

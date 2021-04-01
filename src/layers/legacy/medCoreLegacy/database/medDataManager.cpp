@@ -124,7 +124,7 @@ medAbstractData* medDataManager::retrieveData(const medDataIndex& index)
     return nullptr;
 }
 
-QUuid medDataManager::importData(medAbstractData *data, bool persistent)
+QUuid medDataManager::importData(medAbstractData *data, bool persistent, bool binary)
 {
     if (!data)
         return QUuid();
@@ -132,7 +132,7 @@ QUuid medDataManager::importData(medAbstractData *data, bool persistent)
     Q_D(medDataManager);
     QUuid uuid = QUuid::createUuid();
     medAbstractDbController * controller = persistent ?  d->dbController : d->nonPersDbController;
-    controller->importData(data, uuid);
+    controller->importData(data, uuid, binary);
     return uuid;
 }
 
@@ -197,6 +197,8 @@ void medDataManager::exportData(medAbstractData* data)
     {
         if (!possibleWriters.contains(type))
             continue;
+
+        qDebug() << "------------------------------- " << type << " ----------------------------------";
 
         QStringList extensionList = possibleWriters[type]->supportedFileExtensions();
         QString label = possibleWriters[type]->description() + " (" + extensionList.join(", ") + ")";
@@ -386,7 +388,7 @@ void medDataManager::garbageCollect()
     }
 }
 
-QUuid medDataManager::makePersistent(medAbstractData* data)
+QUuid medDataManager::makePersistent(medAbstractData* data, bool binary)
 {
     if (!data)
     {
@@ -405,7 +407,7 @@ QUuid medDataManager::makePersistent(medAbstractData* data)
 
     if(data->dataIndex().isValidForSeries())
     {
-        jobUuid = this->importData(data, true);
+        jobUuid = this->importData(data, true, binary);
         d->makePersistentJobs.insert(jobUuid, data->dataIndex());
     }
     else if( data->dataIndex().isValidForStudy() )

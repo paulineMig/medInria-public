@@ -37,7 +37,7 @@ class MEDCORELEGACY_EXPORT medDatabaseImporter : public medAbstractDatabaseImpor
 
 public:
     medDatabaseImporter ( const QString& file, const QUuid& uuid, bool indexWithoutImporting = false);
-    medDatabaseImporter ( medAbstractData* medData, const QUuid& callerUuid );
+    medDatabaseImporter ( medAbstractData* medData, const QUuid& callerUuid, bool binary = false);
     ~medDatabaseImporter() override = default;
 
 private:
